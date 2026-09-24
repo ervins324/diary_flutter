@@ -1,5 +1,14 @@
 # Updates Log
 
+## [1.0.2] - 2026-09-24
+### Added & Improved
+- **Comprehensive Project Documentation (`DOCS.md`)**: Created exhaustive documentation covering project overview, layered clean architecture, offline-first sync lifecycle, complete package inventory, feature modules, and Docker backend setup. Updated `README.md` with quickstart instructions.
+- **Auto-Sync Isolate Loop Resolution**: Fixed rapid ~600ms sync loops and VS Code isolate flooding by replacing `ref.watch(syncQueueProvider)` with `ref.read` across `AutoSyncService`, `HomeworkNotifier`, and `NotesNotifier`.
+- **Accurate Connection & Health Diagnostics**: Added descriptive network diagnostic formatting in `ApiClient.checkHealth()` (`_formatDioError`) to pinpoint Docker port 8080 or LAN Wi-Fi issues instead of generic "Server unreachable" messages.
+- **Image Anti-Flicker & List Reconciliation**:
+  - Added `gaplessPlayback: true`, `cacheWidth: 200`, and `frameBuilder` listeners across `AttachmentChipsView` and `LightboxGallery`.
+  - Added explicit `ValueKey`s across `NoteCard`, `HomeworkCard`, and lesson detail sheet items to stabilize widget reconciliation during cache invalidations.
+
 ## [1.0.1] - 2026-09-23
 ### Fixed & Improved
 - **Bottom Navigation Overflow**: Refactored `MainScaffold` bottom bar to use `Expanded` children with `FittedBox` label scaling and condensed padding to eliminate pixel overflow on small and narrow devices.

@@ -157,6 +157,7 @@ class LessonDetailSheet extends ConsumerWidget {
           else
             ...lessonHw.map((hw) {
               return Container(
+                key: ValueKey('hw_${hw.id}'),
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -257,6 +258,7 @@ class LessonDetailSheet extends ConsumerWidget {
           else
             ...lessonNotes.map((n) {
               return Container(
+                key: ValueKey('note_${n.id}'),
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(

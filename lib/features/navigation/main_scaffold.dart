@@ -69,15 +69,16 @@ class MainScaffold extends ConsumerWidget {
                           if (autoSyncState.isSyncing) return;
                           final ok = await ref.read(autoSyncProvider.notifier).syncAll(isManual: true);
                           if (context.mounted) {
+                            final currentError = ref.read(autoSyncProvider).lastError;
                             ScaffoldMessenger.of(context).hideCurrentSnackBar();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
                                   ok
                                       ? loc.translate('sync_success')
-                                      : (autoSyncState.lastError ?? loc.translate('connection_failed')),
+                                      : (currentError ?? loc.translate('connection_failed')),
                                 ),
-                                duration: const Duration(seconds: 2),
+                                duration: const Duration(seconds: 3),
                                 behavior: SnackBarBehavior.floating,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),

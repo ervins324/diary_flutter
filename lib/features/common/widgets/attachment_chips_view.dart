@@ -68,6 +68,7 @@ class AttachmentChipsView extends StatelessWidget {
               itemBuilder: (context, idx) {
                 final url = allImageUrls[idx];
                 return Stack(
+                  key: ValueKey(url),
                   clipBehavior: Clip.none,
                   children: [
                     GestureDetector(
@@ -243,7 +244,10 @@ class AttachmentChipsView extends StatelessWidget {
     if (AttachmentHelper.isLocalFile(rawUrl)) {
       return Image.file(
         File(rawUrl),
+        key: ValueKey(rawUrl),
         fit: BoxFit.cover,
+        gaplessPlayback: true,
+        cacheWidth: 200,
         errorBuilder: (_, _, _) => _errorThumb(),
       );
     }
@@ -255,7 +259,10 @@ class AttachmentChipsView extends StatelessWidget {
         final bytes = base64Decode(data);
         return Image.memory(
           bytes,
+          key: ValueKey(rawUrl),
           fit: BoxFit.cover,
+          gaplessPlayback: true,
+          cacheWidth: 200,
           errorBuilder: (_, _, _) => _errorThumb(),
         );
       } catch (_) {
@@ -266,9 +273,12 @@ class AttachmentChipsView extends StatelessWidget {
     final fullUrl = AttachmentHelper.resolveUrl(rawUrl);
     return Image.network(
       fullUrl,
+      key: ValueKey(fullUrl),
       fit: BoxFit.cover,
-      loadingBuilder: (context, child, progress) {
-        if (progress == null) return child;
+      gaplessPlayback: true,
+      cacheWidth: 200,
+      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+        if (wasSynchronouslyLoaded || frame != null) return child;
         return const Center(
           child: SizedBox(
             width: 18,

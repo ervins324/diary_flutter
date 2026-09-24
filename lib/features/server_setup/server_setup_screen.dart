@@ -50,13 +50,16 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
 
     if (!mounted) return;
     final loc = AppLocalizations.of(context);
+    final apiErr = ref.read(apiClientProvider).lastHealthCheckError;
 
     setState(() {
       _isTesting = false;
       _testSuccess = ok;
       _statusMessage = ok
           ? loc.translate('connection_ok')
-          : loc.translate('connection_failed');
+          : (apiErr != null
+              ? '${loc.translate('connection_failed')}\n$apiErr'
+              : loc.translate('connection_failed'));
     });
   }
 

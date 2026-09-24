@@ -104,7 +104,7 @@ class AutoSyncService extends StateNotifier<AutoSyncState> {
     _resetTimer();
 
     // 4. Trigger initial sync after slight delay to allow UI to mount smoothly
-    _initialTimer = Timer(const Duration(milliseconds: 600), () {
+    _initialTimer = Timer(const Duration(milliseconds: 2000), () {
       if (!_isDisposed && state.isAutoSyncEnabled) {
         syncAll();
       }
@@ -155,7 +155,8 @@ class AutoSyncService extends StateNotifier<AutoSyncState> {
         state = state.copyWith(
           isSyncing: false,
           isOnline: false,
-          lastError: 'Server unreachable',
+          lastError: _apiClient.lastHealthCheckError ??
+              'Server unreachable (${_apiClient.currentBaseUrl})',
           pendingCount: HiveBoxes.getPendingSyncCount(),
         );
         return false;
@@ -217,6 +218,6 @@ class AutoSyncService extends StateNotifier<AutoSyncState> {
 /// Global provider for the auto-sync service.
 final autoSyncProvider = StateNotifierProvider<AutoSyncService, AutoSyncState>((ref) {
   final api = ref.watch(apiClientProvider);
-  final queue = ref.watch(syncQueueProvider);
+  final queue = ref.read(syncQueueProvider);
   return AutoSyncService(ref, api, queue);
 });

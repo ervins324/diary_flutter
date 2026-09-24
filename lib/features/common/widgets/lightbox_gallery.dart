@@ -410,7 +410,9 @@ class _LightboxGalleryState extends State<LightboxGallery>
     if (AttachmentHelper.isLocalFile(rawUrl)) {
       return Image.file(
         File(rawUrl),
+        key: ValueKey(rawUrl),
         fit: BoxFit.contain,
+        gaplessPlayback: true,
         errorBuilder: (_, _, _) => _buildErrorWidget(),
       );
     }
@@ -422,7 +424,9 @@ class _LightboxGalleryState extends State<LightboxGallery>
         final bytes = base64Decode(data);
         return Image.memory(
           bytes,
+          key: ValueKey(rawUrl),
           fit: BoxFit.contain,
+          gaplessPlayback: true,
           errorBuilder: (_, _, _) => _buildErrorWidget(),
         );
       } catch (_) {
@@ -433,9 +437,11 @@ class _LightboxGalleryState extends State<LightboxGallery>
     final fullUrl = AttachmentHelper.resolveUrl(rawUrl);
     return Image.network(
       fullUrl,
+      key: ValueKey(fullUrl),
       fit: BoxFit.contain,
-      loadingBuilder: (context, child, progress) {
-        if (progress == null) return child;
+      gaplessPlayback: true,
+      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+        if (wasSynchronouslyLoaded || frame != null) return child;
         return const Center(
           child: CircularProgressIndicator(color: LiquidTheme.accentLight),
         );

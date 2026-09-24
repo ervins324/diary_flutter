@@ -110,7 +110,10 @@ class NotesScreen extends ConsumerWidget {
             else
               SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => NoteCard(note: filtered[index]),
+                  (context, index) {
+                    final note = filtered[index];
+                    return NoteCard(key: ValueKey(note.id), note: note);
+                  },
                   childCount: filtered.length,
                 ),
               ),

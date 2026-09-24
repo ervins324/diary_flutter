@@ -94,7 +94,8 @@ class SyncQueueManager extends ChangeNotifier {
         _isProcessing = false;
         _state = _state.copyWith(
           isSyncing: false,
-          lastError: 'Server unreachable (${_apiClient.currentBaseUrl})',
+          lastError: _apiClient.lastHealthCheckError ??
+              'Server unreachable (${_apiClient.currentBaseUrl})',
           pendingCount: HiveBoxes.getPendingSyncCount(),
         );
         notifyListeners();

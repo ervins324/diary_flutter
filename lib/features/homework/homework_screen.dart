@@ -101,7 +101,7 @@ class HomeworkScreen extends ConsumerWidget {
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final item = filtered[index];
-                    return HomeworkCard(item: item);
+                    return HomeworkCard(key: ValueKey(item.id), item: item);
                   },
                   childCount: filtered.length,
                 ),

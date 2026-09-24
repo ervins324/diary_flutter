@@ -141,6 +141,6 @@ class NotesNotifier extends StateNotifier<List<LessonNoteModel>> {
 final notesListProvider =
     StateNotifierProvider<NotesNotifier, List<LessonNoteModel>>((ref) {
   final api = ref.watch(apiClientProvider);
-  final queue = ref.watch(syncQueueProvider);
+  final queue = ref.read(syncQueueProvider);
   return NotesNotifier(api, queue);
 });

@@ -13,6 +13,7 @@ import '../../models/holiday_model.dart';
 class ApiClient {
   late Dio _dio;
   String _currentBaseUrl = '';
+  String? lastHealthCheckError;
 
   ApiClient([Dio? customDio]) {
     if (customDio != null) {
@@ -54,31 +55,65 @@ class ApiClient {
 
   String get currentBaseUrl => _currentBaseUrl;
 
+  /// Formats DioException into human-friendly explanation
+  String _formatDioError(dynamic e) {
+    if (e is DioException) {
+      switch (e.type) {
+        case DioExceptionType.connectionTimeout:
+          return 'Connection timeout to $_currentBaseUrl (Check Wi-Fi / IP)';
+        case DioExceptionType.sendTimeout:
+          return 'Send timeout to $_currentBaseUrl';
+        case DioExceptionType.receiveTimeout:
+          return 'Receive timeout from $_currentBaseUrl';
+        case DioExceptionType.badResponse:
+          return 'HTTP ${e.response?.statusCode}: ${e.response?.statusMessage ?? 'Bad response'}';
+        case DioExceptionType.connectionError:
+          return 'Cannot connect to $_currentBaseUrl (Check Docker port 8080 & LAN IP)';
+        case DioExceptionType.cancel:
+          return 'Request cancelled';
+        default:
+          return e.message ?? e.toString();
+      }
+    }
+    return e.toString();
+  }
+
   /// Fast health check to test if server is reachable.
   Future<bool> checkHealth() async {
+    lastHealthCheckError = null;
     try {
       final res = await _dio.get(
         '${AppConfig.apiPrefix}/subjects',
         options: Options(
-          receiveTimeout: const Duration(seconds: 4),
+          connectTimeout: const Duration(seconds: 6),
+          receiveTimeout: const Duration(seconds: 6),
           validateStatus: (status) => status != null && status < 500,
         ),
       );
-      return res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 400;
-    } catch (_) {
-      try {
-        final res = await _dio.get(
-          '/',
-          options: Options(
-            receiveTimeout: const Duration(seconds: 4),
-            validateStatus: (status) => status != null && status < 500,
-          ),
-        );
-        return res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 400;
-      } catch (_) {
-        return false;
+      if (res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 400) {
+        return true;
       }
+      lastHealthCheckError = 'Server returned HTTP ${res.statusCode}';
+    } catch (e) {
+      lastHealthCheckError = _formatDioError(e);
     }
+
+    try {
+      final res = await _dio.get(
+        '/',
+        options: Options(
+          connectTimeout: const Duration(seconds: 6),
+          receiveTimeout: const Duration(seconds: 6),
+          validateStatus: (status) => status != null && status < 500,
+        ),
+      );
+      if (res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 400) {
+        lastHealthCheckError = null;
+        return true;
+      }
+    } catch (_) {}
+
+    return false;
   }
 
   // ── Schedule ──────────────────────────────────────────────────

@@ -192,6 +192,6 @@ class HomeworkNotifier extends StateNotifier<List<HomeworkItem>> {
 final homeworkListProvider =
     StateNotifierProvider<HomeworkNotifier, List<HomeworkItem>>((ref) {
   final api = ref.watch(apiClientProvider);
-  final queue = ref.watch(syncQueueProvider);
+  final queue = ref.read(syncQueueProvider);
   return HomeworkNotifier(api, queue);
 });
