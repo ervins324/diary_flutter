@@ -61,6 +61,7 @@ class AutoSyncService extends StateNotifier<AutoSyncState> {
   final SyncQueueManager _syncQueue;
 
   Timer? _periodicTimer;
+  Timer? _initialTimer;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
   AppLifecycleListener? _lifecycleListener;
   bool _isDisposed = false;
@@ -103,7 +104,7 @@ class AutoSyncService extends StateNotifier<AutoSyncState> {
     _resetTimer();
 
     // 4. Trigger initial sync after slight delay to allow UI to mount smoothly
-    Future.delayed(const Duration(milliseconds: 600), () {
+    _initialTimer = Timer(const Duration(milliseconds: 600), () {
       if (!_isDisposed && state.isAutoSyncEnabled) {
         syncAll();
       }
@@ -142,7 +143,7 @@ class AutoSyncService extends StateNotifier<AutoSyncState> {
   /// 1. Flushes pending local mutations to the server.
   /// 2. Pulls latest schedule, homework, notes, subjects, bells, and stats.
   Future<bool> syncAll({bool isManual = false}) async {
-    if (state.isSyncing || _isDisposed) return false;
+    if (state.isSyncing || _isDisposed || !mounted) return false;
 
     state = state.copyWith(isSyncing: true, lastError: null);
 
@@ -150,6 +151,7 @@ class AutoSyncService extends StateNotifier<AutoSyncState> {
       // Step A: Fast health check
       final isHealthy = await _apiClient.checkHealth();
       if (!isHealthy) {
+        if (_isDisposed || !mounted) return false;
         state = state.copyWith(
           isSyncing: false,
           isOnline: false,
@@ -159,6 +161,7 @@ class AutoSyncService extends StateNotifier<AutoSyncState> {
         return false;
       }
 
+      if (_isDisposed || !mounted) return false;
       state = state.copyWith(isOnline: true);
 
       // Step B: Push queued local changes to server first
@@ -181,6 +184,7 @@ class AutoSyncService extends StateNotifier<AutoSyncState> {
       final now = DateTime.now();
       await HiveBoxes.setLastSyncTime(now);
 
+      if (_isDisposed || !mounted) return false;
       state = state.copyWith(
         isSyncing: false,
         lastSyncTime: now,
@@ -189,6 +193,7 @@ class AutoSyncService extends StateNotifier<AutoSyncState> {
       );
       return true;
     } catch (e) {
+      if (_isDisposed || !mounted) return false;
       state = state.copyWith(
         isSyncing: false,
         lastError: e.toString(),
@@ -201,6 +206,7 @@ class AutoSyncService extends StateNotifier<AutoSyncState> {
   @override
   void dispose() {
     _isDisposed = true;
+    _initialTimer?.cancel();
     _periodicTimer?.cancel();
     _connectivitySub?.cancel();
     _lifecycleListener?.dispose();

@@ -122,13 +122,17 @@ class _LightboxGalleryState extends State<LightboxGallery>
   TapDownDetails? _doubleTapDetails;
   late AnimationController _animController;
   Animation<Matrix4>? _zoomAnimation;
-  double _currentScale = 1.0;
+  late final ValueNotifier<double> _scaleNotifier;
+  late final ValueNotifier<bool> _isZoomedNotifier;
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: _currentIndex);
+    _scaleNotifier = ValueNotifier<double>(1.0);
+    _isZoomedNotifier = ValueNotifier<bool>(false);
+
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 250),
@@ -147,13 +151,19 @@ class _LightboxGalleryState extends State<LightboxGallery>
     _pageController.dispose();
     _animController.dispose();
     _transformController.dispose();
+    _scaleNotifier.dispose();
+    _isZoomedNotifier.dispose();
     super.dispose();
   }
 
   void _updateScale() {
     final scale = _transformController.value.getMaxScaleOnAxis();
-    if ((scale - _currentScale).abs() > 0.02) {
-      if (mounted) setState(() => _currentScale = scale);
+    if ((scale - _scaleNotifier.value).abs() > 0.01) {
+      _scaleNotifier.value = scale;
+      final zoomed = scale > 1.05;
+      if (_isZoomedNotifier.value != zoomed) {
+        _isZoomedNotifier.value = zoomed;
+      }
     }
   }
 
@@ -162,12 +172,12 @@ class _LightboxGalleryState extends State<LightboxGallery>
   }
 
   void _zoomIn() {
-    final target = (_currentScale + 0.5).clamp(1.0, 4.0);
+    final target = (_scaleNotifier.value + 0.5).clamp(1.0, 4.0);
     _zoomTo(target);
   }
 
   void _zoomOut() {
-    final target = (_currentScale - 0.5).clamp(1.0, 4.0);
+    final target = (_scaleNotifier.value - 0.5).clamp(1.0, 4.0);
     _zoomTo(target);
   }
 
@@ -184,7 +194,7 @@ class _LightboxGalleryState extends State<LightboxGallery>
   }
 
   void _handleDoubleTap() {
-    if (_currentScale > 1.2) {
+    if (_scaleNotifier.value > 1.2) {
       _resetZoom();
     } else {
       final position = _doubleTapDetails?.localPosition ?? Offset.zero;
@@ -205,41 +215,46 @@ class _LightboxGalleryState extends State<LightboxGallery>
   Widget build(BuildContext context) {
     final currentUrl = widget.images[_currentIndex];
     final total = widget.images.length;
-    final isZoomed = _currentScale > 1.05;
 
     return Scaffold(
       backgroundColor: Colors.black.withValues(alpha: 0.94),
       body: SafeArea(
         child: Stack(
           children: [
-            // Center Image viewer with PageView
+            // Center Image viewer with PageView decoupled from gesture rebuilds
             GestureDetector(
               onDoubleTapDown: (details) => _doubleTapDetails = details,
               onDoubleTap: _handleDoubleTap,
-              child: PageView.builder(
-                controller: _pageController,
-                physics: isZoomed
-                    ? const NeverScrollableScrollPhysics()
-                    : const BouncingScrollPhysics(),
-                itemCount: total,
-                onPageChanged: (idx) {
-                  setState(() {
-                    _currentIndex = idx;
-                  });
-                  _transformController.value = Matrix4.identity();
-                  _currentScale = 1.0;
-                },
-                itemBuilder: (context, index) {
-                  final rawUrl = widget.images[index];
-                  return Center(
-                    child: InteractiveViewer(
-                      transformationController:
-                          index == _currentIndex ? _transformController : null,
-                      minScale: 0.8,
-                      maxScale: 4.5,
-                      clipBehavior: Clip.none,
-                      child: _buildImageWidget(rawUrl),
-                    ),
+              child: ValueListenableBuilder<bool>(
+                valueListenable: _isZoomedNotifier,
+                builder: (context, isZoomed, _) {
+                  return PageView.builder(
+                    controller: _pageController,
+                    physics: isZoomed
+                        ? const NeverScrollableScrollPhysics()
+                        : const BouncingScrollPhysics(),
+                    itemCount: total,
+                    onPageChanged: (idx) {
+                      setState(() {
+                        _currentIndex = idx;
+                      });
+                      _transformController.value = Matrix4.identity();
+                      _scaleNotifier.value = 1.0;
+                      _isZoomedNotifier.value = false;
+                    },
+                    itemBuilder: (context, index) {
+                      final rawUrl = widget.images[index];
+                      return Center(
+                        child: InteractiveViewer(
+                          transformationController:
+                              index == _currentIndex ? _transformController : null,
+                          minScale: 0.8,
+                          maxScale: 4.5,
+                          clipBehavior: Clip.none,
+                          child: _buildImageWidget(rawUrl),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
@@ -273,50 +288,55 @@ class _LightboxGalleryState extends State<LightboxGallery>
 
                   const Spacer(),
 
-                  // Zoom Controls pill
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white24),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          onPressed: _currentScale > 1.0 ? _zoomOut : null,
-                          icon: const Icon(Icons.remove_rounded, size: 18),
-                          color: Colors.white,
-                          disabledColor: Colors.white30,
-                          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                          padding: EdgeInsets.zero,
-                          tooltip: 'Zoom out',
+                  // Zoom Controls pill - rebuilds only its own small label on zoom
+                  ValueListenableBuilder<double>(
+                    valueListenable: _scaleNotifier,
+                    builder: (context, scale, _) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.white24),
                         ),
-                        GestureDetector(
-                          onTap: _resetZoom,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: Text(
-                              '${(_currentScale * 100).round()}%',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              onPressed: scale > 1.0 ? _zoomOut : null,
+                              icon: const Icon(Icons.remove_rounded, size: 18),
+                              color: Colors.white,
+                              disabledColor: Colors.white30,
+                              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                              padding: EdgeInsets.zero,
+                              tooltip: 'Zoom out',
+                            ),
+                            GestureDetector(
+                              onTap: _resetZoom,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 6),
+                                child: Text(
+                                  '${(scale * 100).round()}%',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                            IconButton(
+                              onPressed: scale < 4.0 ? _zoomIn : null,
+                              icon: const Icon(Icons.add_rounded, size: 18),
+                              color: Colors.white,
+                              disabledColor: Colors.white30,
+                              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                              padding: EdgeInsets.zero,
+                              tooltip: 'Zoom in',
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          onPressed: _currentScale < 4.0 ? _zoomIn : null,
-                          icon: const Icon(Icons.add_rounded, size: 18),
-                          color: Colors.white,
-                          disabledColor: Colors.white30,
-                          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                          padding: EdgeInsets.zero,
-                          tooltip: 'Zoom in',
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                   const SizedBox(width: 8),
 

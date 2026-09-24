@@ -92,7 +92,11 @@ class SyncQueueManager extends ChangeNotifier {
       final isHealthy = await _apiClient.checkHealth();
       if (!isHealthy) {
         _isProcessing = false;
-        _state = _state.copyWith(isSyncing: false, lastError: 'Server unreachable');
+        _state = _state.copyWith(
+          isSyncing: false,
+          lastError: 'Server unreachable (${_apiClient.currentBaseUrl})',
+          pendingCount: HiveBoxes.getPendingSyncCount(),
+        );
         notifyListeners();
         return;
       }
@@ -138,28 +142,35 @@ class SyncQueueManager extends ChangeNotifier {
           if (res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 300) {
             // Success: remove action from queue
             await HiveBoxes.removeSyncAction(action.id);
+          } else if (res.statusCode != null && res.statusCode! >= 400 && res.statusCode! < 500) {
+            // Client error (400/404/422): drop poison pill to prevent permanently blocked queue
+            debugPrint('Dropping invalid sync action ${action.id}: HTTP ${res.statusCode} ${res.data}');
+            await HiveBoxes.removeSyncAction(action.id);
+            _state = _state.copyWith(lastError: 'HTTP ${res.statusCode}: ${res.data ?? res.statusMessage}');
           } else {
-            // Server responded with an error (e.g. 400/500)
-            if (action.retryCount >= 5) {
-              // Discard after 5 retries to avoid poisoning the queue
+            // Server error (500)
+            if (action.retryCount >= 3) {
               await HiveBoxes.removeSyncAction(action.id);
             } else {
               await HiveBoxes.enqueueSyncAction(
                 action.copyWith(retryCount: action.retryCount + 1),
               );
             }
+            _state = _state.copyWith(lastError: 'Server error: HTTP ${res.statusCode}');
           }
         } catch (e) {
           // Network interruption mid-queue: break and retry on next trigger
-          _state = _state.copyWith(lastError: e.toString());
+          _state = _state.copyWith(lastError: 'Sync interrupted: $e');
           break;
         }
       }
 
+      final remaining = HiveBoxes.getPendingSyncCount();
       _state = _state.copyWith(
         isSyncing: false,
-        pendingCount: HiveBoxes.getPendingSyncCount(),
+        pendingCount: remaining,
         lastSyncTime: DateTime.now(),
+        lastError: remaining == 0 ? null : _state.lastError,
       );
     } finally {
       _isProcessing = false;

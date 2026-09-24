@@ -99,8 +99,9 @@ void main() {
         ),
       );
 
-      // Pump a frame for initial layout
+      // Pump a frame for initial layout and settle timers
       await tester.pump();
+      await tester.pump(const Duration(seconds: 2));
 
       expect(find.byType(DiaryApp), findsOneWidget);
     } finally {

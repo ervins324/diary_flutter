@@ -114,7 +114,7 @@ class NotesNotifier extends StateNotifier<List<LessonNoteModel>> {
         id: const Uuid().v4(),
         actionType: 'UPDATE_NOTE',
         endpoint: '/api/v1/lesson-notes/${note.id}',
-        httpMethod: 'PUT',
+        httpMethod: 'PATCH',
         payload: {'text': newText},
         createdAt: DateTime.now().toIso8601String(),
       ),

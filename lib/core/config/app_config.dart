@@ -1,7 +1,7 @@
 /// Central configuration constants for the Diary mobile application.
 class AppConfig {
   static const String appName = 'School Diary';
-  static const String appVersion = '1.0.0';
+  static const String appVersion = '1.0.2';
 
   // Default server base URL (Nginx reverse proxy on port 8080)
   static const String defaultServerUrl = 'http://192.168.1.100:8080';

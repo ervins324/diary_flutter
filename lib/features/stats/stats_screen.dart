@@ -132,6 +132,7 @@ class StatsScreen extends ConsumerWidget {
                 children: [
                   // Metric Switcher: Time vs Lessons
                   Expanded(
+                    flex: 4,
                     child: LiquidGlassLens(
                       style: LiquidTheme.pillStyle(isDark: isDark, radius: 12),
                       child: Container(
@@ -167,6 +168,7 @@ class StatsScreen extends ConsumerWidget {
 
                   // View Switcher: Subjects vs Days
                   Expanded(
+                    flex: 5,
                     child: LiquidGlassLens(
                       style: LiquidTheme.pillStyle(isDark: isDark, radius: 12),
                       child: Container(
@@ -255,23 +257,24 @@ class StatsScreen extends ConsumerWidget {
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (icon != null) ...[
                 Icon(
                   icon,
-                  size: 12,
+                  size: 11,
                   color: isSelected ? Colors.white : Colors.white70,
                 ),
-                const SizedBox(width: 3),
+                const SizedBox(width: 2),
               ],
-              Flexible(
+              Expanded(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
                   child: Text(
                     label,
                     maxLines: 1,
+                    softWrap: false,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,

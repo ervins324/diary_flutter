@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import '../../core/database/hive_boxes.dart';
 import '../../core/localization/app_localizations.dart';
+import '../../core/sync/auto_sync_service.dart';
 import '../../core/theme/liquid_theme.dart';
 import '../../providers/alerts_provider.dart';
 import '../../providers/api_client_provider.dart';
@@ -47,7 +48,11 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final serverUrl = ref.watch(serverUrlProvider);
     final connStatus = ref.watch(serverConnectionProvider);
-    final syncState = ref.watch(syncQueueProvider).state;
+    final syncQueueState = ref.watch(syncQueueProvider).state;
+    final autoSyncState = ref.watch(autoSyncProvider);
+    final isSyncing = autoSyncState.isSyncing || syncQueueState.isSyncing;
+    final lastError = autoSyncState.lastError ?? syncQueueState.lastError;
+    final pendingCount = syncQueueState.pendingCount;
     final locale = ref.watch(localeProvider);
     final themeMode = ref.watch(themeModeProvider);
     final alertState = ref.watch(airRaidAlertProvider);
@@ -208,9 +213,9 @@ class SettingsScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              syncState.isSyncing
+                              isSyncing
                                   ? loc.translate('syncing')
-                                  : '${loc.translate('pending_sync')}: ${syncState.pendingCount}',
+                                  : '${loc.translate('pending_sync')}: $pendingCount',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
@@ -220,7 +225,7 @@ class SettingsScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      if (syncState.isSyncing)
+                      if (isSyncing)
                         const SizedBox(
                           width: 20,
                           height: 20,
@@ -228,8 +233,23 @@ class SettingsScreen extends ConsumerWidget {
                         )
                       else
                         OutlinedButton(
-                          onPressed: () {
-                            ref.read(syncQueueProvider).processQueue();
+                          onPressed: () async {
+                            final success = await ref.read(autoSyncProvider.notifier).syncAll(isManual: true);
+                            if (context.mounted) {
+                              final currentErr = ref.read(autoSyncProvider).lastError ??
+                                  ref.read(syncQueueProvider).state.lastError;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    success
+                                        ? loc.translate('sync_success')
+                                        : '${loc.translate('sync_failed')}: ${currentErr ?? 'Server unreachable'}',
+                                  ),
+                                  backgroundColor: success ? LiquidTheme.success : LiquidTheme.danger,
+                                  duration: const Duration(seconds: 4),
+                                ),
+                              );
+                            }
                           },
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -249,6 +269,104 @@ class SettingsScreen extends ConsumerWidget {
                         ),
                     ],
                   ),
+
+                  // Error notification banner if sync failed
+                  if (lastError != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: LiquidTheme.danger.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: LiquidTheme.danger.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline_rounded, size: 16, color: LiquidTheme.danger),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              lastError,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 11, color: LiquidTheme.danger),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  const Divider(height: 24),
+
+                  // Auto-Sync Switcher & Interval
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              loc.translate('auto_sync'),
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              loc.translate('auto_sync_desc'),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch.adaptive(
+                        value: autoSyncState.isAutoSyncEnabled,
+                        activeTrackColor: LiquidTheme.accentLight,
+                        onChanged: (val) {
+                          ref.read(autoSyncProvider.notifier).toggleAutoSync(val);
+                        },
+                      ),
+                    ],
+                  ),
+
+                  if (autoSyncState.isAutoSyncEnabled) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          loc.translate('sync_interval'),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? Colors.white70 : Colors.black87,
+                          ),
+                        ),
+                        DropdownButton<int>(
+                          value: autoSyncState.syncIntervalSeconds,
+                          dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          underline: const SizedBox(),
+                          items: [
+                            DropdownMenuItem(value: 15, child: Text(loc.translate('sync_interval_15s'))),
+                            DropdownMenuItem(value: 30, child: Text(loc.translate('sync_interval_30s'))),
+                            DropdownMenuItem(value: 60, child: Text(loc.translate('sync_interval_1m'))),
+                            DropdownMenuItem(value: 300, child: Text(loc.translate('sync_interval_5m'))),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) {
+                              ref.read(autoSyncProvider.notifier).setSyncInterval(val);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

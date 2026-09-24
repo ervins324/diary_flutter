@@ -100,18 +100,22 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
 
   void _submit() {
     final text = _textController.text.trim();
-    if (text.isEmpty || _selectedSubject == null) return;
+    final subjects = ref.read(subjectsProvider);
+    final subjectToSave = _selectedSubject != null
+        ? (subjects.where((s) => s.id == _selectedSubject!.id).firstOrNull ?? _selectedSubject)
+        : (subjects.isNotEmpty ? subjects.first : null);
+    if (text.isEmpty || subjectToSave == null) return;
 
     final dueDateStr = DateFormat('yyyy-MM-dd').format(_selectedDueDate);
     final order = int.tryParse(_orderController.text.trim());
 
     ref.read(homeworkListProvider.notifier).addHomework(
-          subjectId: _selectedSubject!.id,
+          subjectId: subjectToSave.id,
           dueDate: dueDateStr,
           lessonOrder: order,
           text: text,
           stagedLocalFiles: _stagedFiles,
-          subject: _selectedSubject,
+          subject: subjectToSave,
         );
 
     Navigator.of(context).pop();
@@ -123,10 +127,11 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
     final loc = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Default subject if not preselected
-    if (_selectedSubject == null && subjects.isNotEmpty) {
-      _selectedSubject = subjects.first;
-    }
+    // Safely resolve the selected subject against the available subjects list
+    final currentSubject = _selectedSubject != null && subjects.isNotEmpty
+        ? (subjects.where((s) => s.id == _selectedSubject!.id).firstOrNull ??
+            subjects.first)
+        : (subjects.isNotEmpty ? subjects.first : null);
 
     return Container(
       decoration: BoxDecoration(
@@ -168,7 +173,7 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
 
             // Subject selector
             DropdownButtonFormField<SubjectModel>(
-              initialValue: _selectedSubject,
+              initialValue: currentSubject,
               dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
               decoration: InputDecoration(
                 labelText: loc.translate('subjects'),

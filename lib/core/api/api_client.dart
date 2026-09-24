@@ -41,6 +41,9 @@ class ApiClient {
   /// Reconfigure Dio when user changes server URL in Settings.
   void updateBaseUrl(String newUrl) {
     var formatted = newUrl.trim();
+    if (formatted.isNotEmpty && !formatted.startsWith('http://') && !formatted.startsWith('https://')) {
+      formatted = 'http://$formatted';
+    }
     if (formatted.endsWith('/')) {
       formatted = formatted.substring(0, formatted.length - 1);
     }
@@ -54,12 +57,24 @@ class ApiClient {
   /// Fast health check to test if server is reachable.
   Future<bool> checkHealth() async {
     try {
-      final res = await _dio.get('/', options: Options(receiveTimeout: const Duration(seconds: 4)));
-      return res.statusCode == 200;
+      final res = await _dio.get(
+        '${AppConfig.apiPrefix}/subjects',
+        options: Options(
+          receiveTimeout: const Duration(seconds: 4),
+          validateStatus: (status) => status != null && status < 500,
+        ),
+      );
+      return res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 400;
     } catch (_) {
       try {
-        final res = await _dio.get('${AppConfig.apiPrefix}/subjects');
-        return res.statusCode == 200;
+        final res = await _dio.get(
+          '/',
+          options: Options(
+            receiveTimeout: const Duration(seconds: 4),
+            validateStatus: (status) => status != null && status < 500,
+          ),
+        );
+        return res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 400;
       } catch (_) {
         return false;
       }
@@ -107,7 +122,7 @@ class ApiClient {
   }
 
   Future<HomeworkItem> updateHomework(String id, Map<String, dynamic> data) async {
-    final response = await _dio.put('${AppConfig.apiPrefix}/homework/$id', data: data);
+    final response = await _dio.patch('${AppConfig.apiPrefix}/homework/$id', data: data);
     return HomeworkItem.fromJson(Map<String, dynamic>.from(response.data as Map));
   }
 
@@ -132,7 +147,7 @@ class ApiClient {
   }
 
   Future<SubjectModel> updateSubject(String id, Map<String, dynamic> data) async {
-    final response = await _dio.put('${AppConfig.apiPrefix}/subjects/$id', data: data);
+    final response = await _dio.patch('${AppConfig.apiPrefix}/subjects/$id', data: data);
     return SubjectModel.fromJson(Map<String, dynamic>.from(response.data as Map));
   }
 
@@ -188,7 +203,7 @@ class ApiClient {
   }
 
   Future<LessonNoteModel> updateLessonNote(String id, Map<String, dynamic> data) async {
-    final response = await _dio.put('${AppConfig.apiPrefix}/lesson-notes/$id', data: data);
+    final response = await _dio.patch('${AppConfig.apiPrefix}/lesson-notes/$id', data: data);
     return LessonNoteModel.fromJson(Map<String, dynamic>.from(response.data as Map));
   }
 
@@ -232,10 +247,21 @@ class ApiClient {
 
   // ── Generic Request for Sync Queue ─────────────────────────────
   Future<Response> executeRaw(String method, String endpoint, dynamic data) async {
+    var effectiveMethod = method.toUpperCase();
+    if (effectiveMethod == 'PUT' &&
+        (endpoint.contains('/homework') ||
+         endpoint.contains('/lesson-notes') ||
+         endpoint.contains('/subjects'))) {
+      effectiveMethod = 'PATCH';
+    }
+
     return await _dio.request(
       endpoint,
       data: data,
-      options: Options(method: method),
+      options: Options(
+        method: effectiveMethod,
+        validateStatus: (status) => status != null && status < 500,
+      ),
     );
   }
 }
