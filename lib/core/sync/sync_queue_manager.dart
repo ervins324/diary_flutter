@@ -44,13 +44,18 @@ class SyncQueueManager extends ChangeNotifier {
 
   SyncState get state => _state;
 
-  SyncQueueManager(this._apiClient) {
-    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
-      final hasConnection = results.any((r) => r != ConnectivityResult.none);
-      if (hasConnection) {
-        processQueue();
-      }
-    });
+  SyncQueueManager(this._apiClient, [Connectivity? connectivity]) {
+    _connectivitySub = (connectivity ?? Connectivity()).onConnectivityChanged.listen(
+      (results) {
+        final hasConnection = results.any((r) => r != ConnectivityResult.none);
+        if (hasConnection) {
+          processQueue();
+        }
+      },
+      onError: (_) {
+        // Silently ignore connectivity stream errors in test/unsupported environments
+      },
+    );
     // Check initial queue count
     _updatePendingCount();
   }

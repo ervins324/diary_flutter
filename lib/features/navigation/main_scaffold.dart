@@ -5,7 +5,9 @@ import '../../core/localization/app_localizations.dart';
 import '../../core/theme/ambient_background.dart';
 import '../../core/theme/liquid_theme.dart';
 import '../../providers/api_client_provider.dart';
+import '../../core/sync/auto_sync_service.dart';
 import '../alerts/widgets/air_raid_banner.dart';
+import '../common/widgets/lazy_indexed_stack.dart';
 import '../homework/homework_screen.dart';
 import '../notes/notes_screen.dart';
 import '../schedule/schedule_screen.dart';
@@ -22,7 +24,7 @@ class MainScaffold extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(selectedTabIndexProvider);
     final connStatus = ref.watch(serverConnectionProvider);
-    final syncState = ref.watch(syncQueueProvider).state;
+    final autoSyncState = ref.watch(autoSyncProvider);
     final loc = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -61,31 +63,35 @@ class MainScaffold extends ConsumerWidget {
                       ),
                       const Spacer(),
 
-                      // Syncing indicator
-                      if (syncState.isSyncing) ...[
-                        const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: LiquidTheme.accentLight,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-
-                      // Connection badge dot
-                      Tooltip(
-                        message: connStatus == ConnectionStatus.connected
-                            ? 'Online'
-                            : 'Offline (Local Cache)',
+                      // Interactive Auto-Sync button & connection badge
+                      GestureDetector(
+                        onTap: () async {
+                          if (autoSyncState.isSyncing) return;
+                          final ok = await ref.read(autoSyncProvider.notifier).syncAll(isManual: true);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  ok
+                                      ? loc.translate('sync_success')
+                                      : (autoSyncState.lastError ?? loc.translate('connection_failed')),
+                                ),
+                                duration: const Duration(seconds: 2),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                            );
+                          }
+                        },
+                        behavior: HitTestBehavior.opaque,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                           decoration: BoxDecoration(
                             color: connStatus == ConnectionStatus.connected
                                 ? LiquidTheme.success.withValues(alpha: 0.15)
                                 : LiquidTheme.danger.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: connStatus == ConnectionStatus.connected
                                   ? LiquidTheme.success.withValues(alpha: 0.4)
@@ -95,19 +101,31 @@ class MainScaffold extends ConsumerWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(
-                                width: 7,
-                                height: 7,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: connStatus == ConnectionStatus.connected
-                                      ? LiquidTheme.success
-                                      : LiquidTheme.danger,
+                              if (autoSyncState.isSyncing)
+                                const SizedBox(
+                                  width: 11,
+                                  height: 11,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: LiquidTheme.accentLight,
+                                  ),
+                                )
+                              else
+                                Container(
+                                  width: 7,
+                                  height: 7,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: connStatus == ConnectionStatus.connected
+                                        ? LiquidTheme.success
+                                        : LiquidTheme.danger,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 5),
+                              const SizedBox(width: 6),
                               Text(
-                                connStatus == ConnectionStatus.connected ? 'ONLINE' : 'OFFLINE',
+                                autoSyncState.isSyncing
+                                    ? loc.translate('syncing')
+                                    : (connStatus == ConnectionStatus.connected ? 'ONLINE' : 'OFFLINE'),
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
@@ -116,6 +134,24 @@ class MainScaffold extends ConsumerWidget {
                                       : LiquidTheme.danger,
                                 ),
                               ),
+                              if (autoSyncState.pendingCount > 0) ...[
+                                const SizedBox(width: 4),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.shade700,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '${autoSyncState.pendingCount}',
+                                    style: const TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -127,9 +163,9 @@ class MainScaffold extends ConsumerWidget {
                 // Air Raid Alert Banner
                 const AirRaidBanner(),
 
-                // Active tab screen
+                // Active tab screen (Lazy loading so only visited tabs are mounted)
                 Expanded(
-                  child: IndexedStack(
+                  child: LazyIndexedStack(
                     index: currentIndex,
                     children: pages,
                   ),
@@ -155,47 +191,56 @@ class MainScaffold extends ConsumerWidget {
                 ),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildNavItem(
-                    ref: ref,
-                    index: 0,
-                    icon: Icons.calendar_today_rounded,
-                    label: loc.translate('nav_schedule'),
-                    isSelected: currentIndex == 0,
-                    isDark: isDark,
+                  Expanded(
+                    child: _buildNavItem(
+                      ref: ref,
+                      index: 0,
+                      icon: Icons.calendar_today_rounded,
+                      label: loc.translate('nav_schedule'),
+                      isSelected: currentIndex == 0,
+                      isDark: isDark,
+                    ),
                   ),
-                  _buildNavItem(
-                    ref: ref,
-                    index: 1,
-                    icon: Icons.assignment_rounded,
-                    label: loc.translate('nav_homework'),
-                    isSelected: currentIndex == 1,
-                    isDark: isDark,
+                  Expanded(
+                    child: _buildNavItem(
+                      ref: ref,
+                      index: 1,
+                      icon: Icons.assignment_rounded,
+                      label: loc.translate('nav_homework'),
+                      isSelected: currentIndex == 1,
+                      isDark: isDark,
+                    ),
                   ),
-                  _buildNavItem(
-                    ref: ref,
-                    index: 2,
-                    icon: Icons.edit_note_rounded,
-                    label: loc.translate('nav_notes'),
-                    isSelected: currentIndex == 2,
-                    isDark: isDark,
+                  Expanded(
+                    child: _buildNavItem(
+                      ref: ref,
+                      index: 2,
+                      icon: Icons.edit_note_rounded,
+                      label: loc.translate('nav_notes'),
+                      isSelected: currentIndex == 2,
+                      isDark: isDark,
+                    ),
                   ),
-                  _buildNavItem(
-                    ref: ref,
-                    index: 3,
-                    icon: Icons.bar_chart_rounded,
-                    label: loc.translate('nav_stats'),
-                    isSelected: currentIndex == 3,
-                    isDark: isDark,
+                  Expanded(
+                    child: _buildNavItem(
+                      ref: ref,
+                      index: 3,
+                      icon: Icons.bar_chart_rounded,
+                      label: loc.translate('nav_stats'),
+                      isSelected: currentIndex == 3,
+                      isDark: isDark,
+                    ),
                   ),
-                  _buildNavItem(
-                    ref: ref,
-                    index: 4,
-                    icon: Icons.settings_rounded,
-                    label: loc.translate('nav_settings'),
-                    isSelected: currentIndex == 4,
-                    isDark: isDark,
+                  Expanded(
+                    child: _buildNavItem(
+                      ref: ref,
+                      index: 4,
+                      icon: Icons.settings_rounded,
+                      label: loc.translate('nav_settings'),
+                      isSelected: currentIndex == 4,
+                      isDark: isDark,
+                    ),
                   ),
                 ],
               ),
@@ -221,32 +266,37 @@ class MainScaffold extends ConsumerWidget {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
               ? (isDark ? const Color(0x336366F1) : const Color(0x336366F1))
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              size: 22,
+              size: 20,
               color: isSelected
                   ? LiquidTheme.accentLight
                   : (isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted),
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected
-                    ? LiquidTheme.accentLight
-                    : (isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted),
+            const SizedBox(height: 3),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isSelected
+                      ? LiquidTheme.accentLight
+                      : (isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted),
+                ),
               ),
             ),
           ],

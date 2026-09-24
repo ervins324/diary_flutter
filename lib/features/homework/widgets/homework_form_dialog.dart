@@ -7,9 +7,12 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/liquid_theme.dart';
+import '../../../models/homework_model.dart';
 import '../../../models/subject_model.dart';
 import '../../../providers/homework_provider.dart';
 import '../../../providers/subjects_provider.dart';
+import '../../common/widgets/attachment_chips_view.dart';
+import '../../common/widgets/lightbox_gallery.dart';
 
 /// Modal bottom sheet for creating or editing homework with offline photo staging.
 class HomeworkFormDialog extends ConsumerStatefulWidget {
@@ -269,21 +272,36 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
             ),
             const SizedBox(height: 12),
 
-            // Staged attachments chips
+            // Staged attachments & image previews with tap-to-zoom
             if (_stagedFiles.isNotEmpty) ...[
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                children: _stagedFiles.map((path) {
-                  return Chip(
-                    label: Text(
-                      path.split(Platform.pathSeparator).last,
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                    onDeleted: () => setState(() => _stagedFiles.remove(path)),
-                    deleteIconColor: LiquidTheme.danger,
-                  );
-                }).toList(),
+              AttachmentChipsView(
+                images: _stagedFiles
+                    .where((p) => AttachmentHelper.isImageAttachment('image', p))
+                    .toList(),
+                attachments: _stagedFiles
+                    .where((p) => !AttachmentHelper.isImageAttachment('image', p))
+                    .map((p) => AttachmentItem(
+                          name: p.split(Platform.pathSeparator).last,
+                          type: p.toLowerCase().endsWith('.pdf') ? 'pdf' : 'presentation',
+                          url: p,
+                          localFilePath: p,
+                        ))
+                    .toList(),
+                isDark: isDark,
+                onRemoveImage: (idx) {
+                  final imgList = _stagedFiles
+                      .where((p) => AttachmentHelper.isImageAttachment('image', p))
+                      .toList();
+                  final target = imgList[idx];
+                  setState(() => _stagedFiles.remove(target));
+                },
+                onRemoveAttachment: (idx) {
+                  final docList = _stagedFiles
+                      .where((p) => !AttachmentHelper.isImageAttachment('image', p))
+                      .toList();
+                  final target = docList[idx];
+                  setState(() => _stagedFiles.remove(target));
+                },
               ),
               const SizedBox(height: 12),
             ],

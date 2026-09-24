@@ -6,6 +6,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/liquid_theme.dart';
 import '../../../models/homework_model.dart';
 import '../../../providers/homework_provider.dart';
+import '../../common/widgets/attachment_chips_view.dart';
 import '../../schedule/widgets/lesson_slot_card.dart';
 
 /// Card displaying homework item with timer, completion checkbox, and attachment previews.
@@ -159,44 +160,12 @@ class _HomeworkCardState extends ConsumerState<HomeworkCard> {
                 ],
               ),
 
-              // Attachment previews
-              if (widget.item.attachments.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: widget.item.attachments.map((att) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0x2694A3B8) : const Color(0x2664748B),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            att.type == 'image' ? Icons.image_rounded : Icons.description_rounded,
-                            size: 14,
-                            color: LiquidTheme.accentLight,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            att.name,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: isDark ? Colors.white70 : Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
+              // Attachment & Image previews with tap-to-zoom
+              AttachmentChipsView(
+                images: widget.item.images,
+                attachments: widget.item.attachments,
+                isDark: isDark,
+              ),
 
               const SizedBox(height: 12),
 

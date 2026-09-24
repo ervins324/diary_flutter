@@ -33,12 +33,16 @@ DateTime getMonday(DateTime date) {
   );
 }
 
+/// Flag indicating if the schedule couldn't be loaded from the server
+final scheduleOfflineWarningProvider = StateProvider<bool>((ref) => false);
+
 /// Schedule StateNotifier that loads and caches a week's schedule
 class ScheduleNotifier extends StateNotifier<AsyncValue<List<DaySchedule>>> {
   final ApiClient _apiClient;
+  final Ref _ref;
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
 
-  ScheduleNotifier(this._apiClient) : super(const AsyncValue.loading()) {
+  ScheduleNotifier(this._apiClient, this._ref) : super(const AsyncValue.loading()) {
     loadWeekSchedule(DateTime.now());
   }
 
@@ -69,10 +73,24 @@ class ScheduleNotifier extends StateNotifier<AsyncValue<List<DaySchedule>>> {
       if (remoteDays.isNotEmpty) {
         await HiveBoxes.saveSchedules(remoteDays);
         state = AsyncValue.data(remoteDays);
+        _ref.read(scheduleOfflineWarningProvider.notifier).state = false;
       }
-    } catch (e, stack) {
+    } catch (e) {
+      _ref.read(scheduleOfflineWarningProvider.notifier).state = true;
       if (cachedDays.isEmpty) {
-        state = AsyncValue.error(e, stack);
+        // Generate empty 7 days for the selected week so UI stays intact
+        final dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+        final fallbackDays = List.generate(7, (i) {
+          final dayDate = monday.add(Duration(days: i));
+          final dayStr = _dateFormat.format(dayDate);
+          return DaySchedule(
+            date: dayStr,
+            dayName: dayNames[i],
+            weekType: calculateWeekType(dayDate),
+            lessons: [],
+          );
+        });
+        state = AsyncValue.data(fallbackDays);
       }
     }
   }
@@ -86,5 +104,5 @@ class ScheduleNotifier extends StateNotifier<AsyncValue<List<DaySchedule>>> {
 final scheduleProvider =
     StateNotifierProvider<ScheduleNotifier, AsyncValue<List<DaySchedule>>>((ref) {
   final api = ref.watch(apiClientProvider);
-  return ScheduleNotifier(api);
+  return ScheduleNotifier(api, ref);
 });

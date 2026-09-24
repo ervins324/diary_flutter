@@ -27,21 +27,19 @@ class NotesNotifier extends StateNotifier<List<LessonNoteModel>> {
   Future<void> fetchRemote() async {
     try {
       final remote = await _apiClient.getLessonNotes();
-      if (remote.isNotEmpty) {
-        final pendingIds = state.where((n) => n.isPendingSync).map((n) => n.id).toSet();
-        final merged = <LessonNoteModel>[];
+      final pendingIds = state.where((n) => n.isPendingSync).map((n) => n.id).toSet();
+      final merged = <LessonNoteModel>[];
 
-        for (final item in remote) {
-          if (!pendingIds.contains(item.id)) {
-            merged.add(item);
-          }
+      for (final item in remote) {
+        if (!pendingIds.contains(item.id)) {
+          merged.add(item);
         }
-        merged.addAll(state.where((n) => n.isPendingSync));
-        merged.sort((a, b) => b.date.compareTo(a.date));
-
-        await HiveBoxes.saveNotes(merged);
-        state = merged;
       }
+      merged.addAll(state.where((n) => n.isPendingSync));
+      merged.sort((a, b) => b.date.compareTo(a.date));
+
+      await HiveBoxes.saveNotes(merged);
+      state = merged;
     } catch (_) {
       // Offline fallback
     }

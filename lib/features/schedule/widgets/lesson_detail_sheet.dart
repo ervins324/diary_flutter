@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/liquid_theme.dart';
 import '../../../models/schedule_model.dart';
+import '../../common/widgets/attachment_chips_view.dart';
 import '../../homework/widgets/homework_form_dialog.dart';
 import '../../notes/widgets/note_form_dialog.dart';
 import '../../../providers/homework_provider.dart';
@@ -165,27 +166,41 @@ class LessonDetailSheet extends ConsumerWidget {
                     color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
                   ),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Checkbox(
-                      value: hw.isCompleted,
-                      activeColor: LiquidTheme.success,
-                      onChanged: (_) {
-                        ref.read(homeworkListProvider.notifier).toggleComplete(hw);
-                      },
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: hw.isCompleted,
+                          activeColor: LiquidTheme.success,
+                          onChanged: (_) {
+                            ref.read(homeworkListProvider.notifier).toggleComplete(hw);
+                          },
+                        ),
+                        Expanded(
+                          child: Text(
+                            hw.text,
+                            style: TextStyle(
+                              fontSize: 14,
+                              decoration: hw.isCompleted ? TextDecoration.lineThrough : null,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                        ),
+                        if (hw.isPendingSync)
+                          const Icon(Icons.cloud_upload_outlined, size: 16, color: LiquidTheme.warning),
+                      ],
                     ),
-                    Expanded(
-                      child: Text(
-                        hw.text,
-                        style: TextStyle(
-                          fontSize: 14,
-                          decoration: hw.isCompleted ? TextDecoration.lineThrough : null,
-                          color: isDark ? Colors.white : Colors.black87,
+                    if (hw.images.isNotEmpty || hw.attachments.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 12.0, top: 4.0),
+                        child: AttachmentChipsView(
+                          images: hw.images,
+                          attachments: hw.attachments,
+                          isDark: isDark,
                         ),
                       ),
-                    ),
-                    if (hw.isPendingSync)
-                      const Icon(Icons.cloud_upload_outlined, size: 16, color: LiquidTheme.warning),
                   ],
                 ),
               );
@@ -251,12 +266,25 @@ class LessonDetailSheet extends ConsumerWidget {
                     color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
                   ),
                 ),
-                child: Text(
-                  n.text,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isDark ? Colors.white70 : Colors.black87,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      n.text,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.white70 : Colors.black87,
+                      ),
+                    ),
+                    if (n.images.isNotEmpty || n.attachments.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      AttachmentChipsView(
+                        images: n.images,
+                        attachments: n.attachments,
+                        isDark: isDark,
+                      ),
+                    ],
+                  ],
                 ),
               );
             }),

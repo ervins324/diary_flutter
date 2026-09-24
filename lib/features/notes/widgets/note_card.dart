@@ -4,6 +4,7 @@ import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import '../../../core/theme/liquid_theme.dart';
 import '../../../models/lesson_note_model.dart';
 import '../../../providers/notes_provider.dart';
+import '../../common/widgets/attachment_chips_view.dart';
 import '../../schedule/widgets/lesson_slot_card.dart';
 
 /// Liquid glass card for displaying a lesson note.
@@ -96,41 +97,12 @@ class NoteCard extends ConsumerWidget {
                 ),
               ),
 
-              // Attachment previews
-              if (note.attachments.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: note.attachments.map((att) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0x2694A3B8) : const Color(0x2664748B),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            att.type == 'image' ? Icons.image_rounded : Icons.description_rounded,
-                            size: 14,
-                            color: LiquidTheme.accentLight,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            att.name,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: isDark ? Colors.white70 : Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
+              // Attachment previews & images with zoom
+              AttachmentChipsView(
+                images: note.images,
+                attachments: note.attachments,
+                isDark: isDark,
+              ),
 
               // Actions
               Row(

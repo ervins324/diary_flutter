@@ -183,6 +183,7 @@ class SettingsScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Container(
                         padding: const EdgeInsets.all(8),
@@ -192,7 +193,7 @@ class SettingsScreen extends ConsumerWidget {
                         ),
                         child: const Icon(Icons.sync_rounded, size: 20, color: LiquidTheme.success),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,7 +201,7 @@ class SettingsScreen extends ConsumerWidget {
                             Text(
                               loc.translate('sync_status'),
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 15,
                                 fontWeight: FontWeight.bold,
                                 color: isDark ? Colors.white : Colors.black87,
                               ),
@@ -218,7 +219,7 @@ class SettingsScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
-
+                      const SizedBox(width: 8),
                       if (syncState.isSyncing)
                         const SizedBox(
                           width: 20,
@@ -226,13 +227,24 @@ class SettingsScreen extends ConsumerWidget {
                           child: CircularProgressIndicator(strokeWidth: 2, color: LiquidTheme.accentLight),
                         )
                       else
-                        TextButton(
+                        OutlinedButton(
                           onPressed: () {
                             ref.read(syncQueueProvider).processQueue();
                           },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            side: const BorderSide(color: LiquidTheme.accentLight),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
                           child: Text(
                             loc.translate('sync_now'),
-                            style: const TextStyle(color: LiquidTheme.accentLight),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: LiquidTheme.accentLight,
+                            ),
                           ),
                         ),
                     ],
@@ -257,63 +269,61 @@ class SettingsScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Language Toggle
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        loc.translate('language'),
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                      SegmentedButton<String>(
-                        segments: const [
-                          ButtonSegment(value: 'uk', label: Text('Укр')),
-                          ButtonSegment(value: 'en', label: Text('Eng')),
-                        ],
-                        selected: {locale.languageCode},
-                        onSelectionChanged: (set) {
-                          ref.read(localeProvider.notifier).setLocale(set.first);
-                        },
-                      ),
-                    ],
+                  // Language Selector
+                  Text(
+                    loc.translate('language'),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: 'uk', label: Text('Українська')),
+                        ButtonSegment(value: 'en', label: Text('English')),
+                      ],
+                      selected: {locale.languageCode},
+                      onSelectionChanged: (set) {
+                        ref.read(localeProvider.notifier).setLocale(set.first);
+                      },
+                    ),
                   ),
                   const Divider(height: 28),
 
-                  // Theme Toggle
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        loc.translate('theme'),
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: isDark ? Colors.white : Colors.black87,
+                  // Theme Selector
+                  Text(
+                    loc.translate('theme'),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<ThemeMode>(
+                      segments: [
+                        ButtonSegment(
+                          value: ThemeMode.dark,
+                          icon: const Icon(Icons.dark_mode_rounded, size: 16),
+                          label: Text(loc.translate('theme_dark')),
                         ),
-                      ),
-                      SegmentedButton<ThemeMode>(
-                        segments: [
-                          ButtonSegment(
-                            value: ThemeMode.dark,
-                            icon: const Icon(Icons.dark_mode_rounded, size: 16),
-                            label: Text(loc.translate('theme_dark')),
-                          ),
-                          ButtonSegment(
-                            value: ThemeMode.light,
-                            icon: const Icon(Icons.light_mode_rounded, size: 16),
-                            label: Text(loc.translate('theme_light')),
-                          ),
-                        ],
-                        selected: {themeMode == ThemeMode.light ? ThemeMode.light : ThemeMode.dark},
-                        onSelectionChanged: (set) {
-                          ref.read(themeModeProvider.notifier).setThemeMode(set.first);
-                        },
-                      ),
-                    ],
+                        ButtonSegment(
+                          value: ThemeMode.light,
+                          icon: const Icon(Icons.light_mode_rounded, size: 16),
+                          label: Text(loc.translate('theme_light')),
+                        ),
+                      ],
+                      selected: {themeMode == ThemeMode.light ? ThemeMode.light : ThemeMode.dark},
+                      onSelectionChanged: (set) {
+                        ref.read(themeModeProvider.notifier).setThemeMode(set.first);
+                      },
+                    ),
                   ),
                   const Divider(height: 28),
 

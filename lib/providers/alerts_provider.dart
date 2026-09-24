@@ -37,11 +37,14 @@ class AirRaidAlertState {
 class AirRaidAlertNotifier extends StateNotifier<AirRaidAlertState> {
   WebSocketChannel? _channel;
   Timer? _pollingTimer;
+  Timer? _reconnectTimer;
   final Dio _dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 5)));
 
-  AirRaidAlertNotifier()
+  AirRaidAlertNotifier({bool autoStart = true})
       : super(AirRaidAlertState(activeRegion: HiveBoxes.getAlertRegion())) {
-    _startMonitoring();
+    if (autoStart) {
+      _startMonitoring();
+    }
   }
 
   void updateRegion(String newRegion) {
@@ -85,7 +88,8 @@ class AirRaidAlertNotifier extends StateNotifier<AirRaidAlertState> {
   }
 
   void _reconnectWsDelayed() {
-    Future.delayed(const Duration(seconds: 20), () {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(const Duration(seconds: 20), () {
       if (mounted) {
         _connectWebSocket();
       }
@@ -153,6 +157,8 @@ class AirRaidAlertNotifier extends StateNotifier<AirRaidAlertState> {
   void dispose() {
     _channel?.sink.close();
     _pollingTimer?.cancel();
+    _reconnectTimer?.cancel();
+    _dio.close();
     super.dispose();
   }
 }

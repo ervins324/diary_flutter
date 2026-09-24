@@ -1,14 +1,18 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/liquid_theme.dart';
+import '../../../models/homework_model.dart';
 import '../../../models/subject_model.dart';
 import '../../../providers/notes_provider.dart';
 import '../../../providers/subjects_provider.dart';
+import '../../common/widgets/attachment_chips_view.dart';
+import '../../common/widgets/lightbox_gallery.dart';
 
 /// Modal bottom sheet to create or edit lesson notes.
 class NoteFormDialog extends ConsumerStatefulWidget {
@@ -67,6 +71,26 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
         final fileName = 'note_${DateTime.now().millisecondsSinceEpoch}_${xFile.name}';
         final localFile = File('${appDir.path}/$fileName');
         await File(xFile.path).copy(localFile.path);
+
+        setState(() {
+          _stagedFiles.add(localFile.path);
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _pickDocument() async {
+    try {
+      final res = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'ppt', 'pptx', 'doc', 'docx', 'txt', 'png', 'jpg', 'jpeg'],
+      );
+      if (res.isNotEmpty && res.first.path != null) {
+        final origin = File(res.first.path!);
+        final appDir = await getApplicationDocumentsDirectory();
+        final fileName = 'note_doc_${DateTime.now().millisecondsSinceEpoch}_${res.first.name}';
+        final localFile = File('${appDir.path}/$fileName');
+        await origin.copy(localFile.path);
 
         setState(() {
           _stagedFiles.add(localFile.path);
@@ -248,26 +272,41 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
             ),
             const SizedBox(height: 12),
 
-            // Staged photos
+            // Staged photos & attachments with tap-to-zoom
             if (_stagedFiles.isNotEmpty) ...[
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                children: _stagedFiles.map((path) {
-                  return Chip(
-                    label: Text(
-                      path.split(Platform.pathSeparator).last,
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                    onDeleted: () => setState(() => _stagedFiles.remove(path)),
-                    deleteIconColor: LiquidTheme.danger,
-                  );
-                }).toList(),
+              AttachmentChipsView(
+                images: _stagedFiles
+                    .where((p) => AttachmentHelper.isImageAttachment('image', p))
+                    .toList(),
+                attachments: _stagedFiles
+                    .where((p) => !AttachmentHelper.isImageAttachment('image', p))
+                    .map((p) => AttachmentItem(
+                          name: p.split(Platform.pathSeparator).last,
+                          type: p.toLowerCase().endsWith('.pdf') ? 'pdf' : 'presentation',
+                          url: p,
+                          localFilePath: p,
+                        ))
+                    .toList(),
+                isDark: isDark,
+                onRemoveImage: (idx) {
+                  final imgList = _stagedFiles
+                      .where((p) => AttachmentHelper.isImageAttachment('image', p))
+                      .toList();
+                  final target = imgList[idx];
+                  setState(() => _stagedFiles.remove(target));
+                },
+                onRemoveAttachment: (idx) {
+                  final docList = _stagedFiles
+                      .where((p) => !AttachmentHelper.isImageAttachment('image', p))
+                      .toList();
+                  final target = docList[idx];
+                  setState(() => _stagedFiles.remove(target));
+                },
               ),
               const SizedBox(height: 12),
             ],
 
-            // Photo picker buttons
+            // Photo and file picker buttons
             Row(
               children: [
                 OutlinedButton.icon(
@@ -288,6 +327,13 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
                     foregroundColor: LiquidTheme.accentLight,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: _pickDocument,
+                  icon: const Icon(Icons.attach_file_rounded),
+                  color: LiquidTheme.accentLight,
+                  tooltip: 'Attach document',
                 ),
               ],
             ),

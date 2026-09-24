@@ -27,23 +27,21 @@ class HomeworkNotifier extends StateNotifier<List<HomeworkItem>> {
   Future<void> fetchRemote() async {
     try {
       final remote = await _apiClient.getHomeworkList();
-      if (remote.isNotEmpty) {
-        // Merge remote with local pending sync items so un-synced edits are never overwritten
-        final pendingIds = state.where((h) => h.isPendingSync).map((h) => h.id).toSet();
-        final merged = <HomeworkItem>[];
+      // Merge remote with local pending sync items so un-synced edits are never overwritten
+      final pendingIds = state.where((h) => h.isPendingSync).map((h) => h.id).toSet();
+      final merged = <HomeworkItem>[];
 
-        for (final item in remote) {
-          if (!pendingIds.contains(item.id)) {
-            merged.add(item);
-          }
+      for (final item in remote) {
+        if (!pendingIds.contains(item.id)) {
+          merged.add(item);
         }
-        // Keep pending items
-        merged.addAll(state.where((h) => h.isPendingSync));
-        merged.sort((a, b) => a.dueDate.compareTo(b.dueDate));
-
-        await HiveBoxes.saveHomeworkList(merged);
-        state = merged;
       }
+      // Keep pending items
+      merged.addAll(state.where((h) => h.isPendingSync));
+      merged.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+
+      await HiveBoxes.saveHomeworkList(merged);
+      state = merged;
     } catch (_) {
       // Offline fallback: keep cached state
     }

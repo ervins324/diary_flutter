@@ -20,8 +20,10 @@ class HiveBoxes {
   static late Box _holidaysBox;
   static late Box _syncQueueBox;
 
-  static Future<void> init() async {
-    await Hive.initFlutter();
+  static Future<void> init({bool isTest = false}) async {
+    if (!isTest) {
+      await Hive.initFlutter();
+    }
     _settingsBox = await Hive.openBox(AppConfig.boxSettings);
     _scheduleBox = await Hive.openBox(AppConfig.boxSchedule);
     _homeworkBox = await Hive.openBox(AppConfig.boxHomework);
@@ -63,6 +65,34 @@ class HiveBoxes {
 
   static Future<void> setAlertRegion(String region) async {
     await _settingsBox.put('alert_region', region);
+  }
+
+  static bool getAutoSyncEnabled() {
+    return _settingsBox.get('auto_sync_enabled', defaultValue: true) as bool;
+  }
+
+  static Future<void> setAutoSyncEnabled(bool enabled) async {
+    await _settingsBox.put('auto_sync_enabled', enabled);
+  }
+
+  static int getAutoSyncInterval() {
+    return (_settingsBox.get('auto_sync_interval', defaultValue: 30) as num).toInt();
+  }
+
+  static Future<void> setAutoSyncInterval(int seconds) async {
+    await _settingsBox.put('auto_sync_interval', seconds);
+  }
+
+  static DateTime? getLastSyncTime() {
+    final raw = _settingsBox.get('last_sync_timestamp');
+    if (raw is String) {
+      return DateTime.tryParse(raw);
+    }
+    return null;
+  }
+
+  static Future<void> setLastSyncTime(DateTime time) async {
+    await _settingsBox.put('last_sync_timestamp', time.toIso8601String());
   }
 
   // ── Subjects ──────────────────────────────────────────────────

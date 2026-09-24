@@ -14,8 +14,13 @@ class ApiClient {
   late Dio _dio;
   String _currentBaseUrl = '';
 
-  ApiClient() {
-    _initDio();
+  ApiClient([Dio? customDio]) {
+    if (customDio != null) {
+      _dio = customDio;
+      _currentBaseUrl = customDio.options.baseUrl;
+    } else {
+      _initDio();
+    }
   }
 
   void _initDio() {
