@@ -68,7 +68,10 @@ class ApiClient {
         case DioExceptionType.badResponse:
           return 'HTTP ${e.response?.statusCode}: ${e.response?.statusMessage ?? 'Bad response'}';
         case DioExceptionType.connectionError:
-          return 'Cannot connect to $_currentBaseUrl (Check Docker port 8080 & LAN IP)';
+          final detail = e.error != null ? ' [${e.error}]' : '';
+          final isLocalhost = _currentBaseUrl.contains('localhost') || _currentBaseUrl.contains('127.0.0.1');
+          final localhostHint = isLocalhost ? ' (On mobile use PC LAN IP, not localhost)' : '';
+          return 'Cannot connect to $_currentBaseUrl$detail$localhostHint (Check Docker port 8080 & LAN IP)';
         case DioExceptionType.cancel:
           return 'Request cancelled';
         default:

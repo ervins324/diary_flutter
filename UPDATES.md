@@ -1,5 +1,14 @@
 # Updates Log
 
+## [1.0.3] - 2026-09-25
+### Fixed & Improved
+- **Release Mode Server Connection**: Fixed failure to connect to the Docker backend (`http://<LAN_IP>:8080`) in Android release mode:
+  - Added `android.permission.INTERNET` and `android.permission.ACCESS_NETWORK_STATE` directly to `android/app/src/main/AndroidManifest.xml` (previously only injected in debug/profile builds).
+  - Configured `android:usesCleartextTraffic="true"` and added a dedicated `res/xml/network_security_config.xml` with system and user trust anchors to enable unencrypted HTTP traffic to local Docker server LAN IP addresses on modern Android versions (Android 9+ through Android 16).
+  - Configured `NSAppTransportSecurity` (`NSAllowsArbitraryLoads` & `NSAllowsLocalNetworking`) in `ios/Runner/Info.plist` for local network communication.
+  - Enhanced `ApiClient` error diagnostics to show underlying socket details and added a warning when attempting to use `localhost` on mobile devices.
+- **Test Suite Hermeticity**: Stabilized `widget_test.dart` by overriding `autoSyncProvider` to prevent background periodic timers from keeping tests open.
+
 ## [1.0.2] - 2026-09-24
 ### Added & Improved
 - **Comprehensive Project Documentation (`DOCS.md`)**: Created exhaustive documentation covering project overview, layered clean architecture, offline-first sync lifecycle, complete package inventory, feature modules, and Docker backend setup. Updated `README.md` with quickstart instructions.

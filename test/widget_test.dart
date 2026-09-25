@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:diary_flutter/main.dart';
 import 'package:diary_flutter/core/api/api_client.dart';
 import 'package:diary_flutter/core/database/hive_boxes.dart';
+import 'package:diary_flutter/core/sync/auto_sync_service.dart';
 import 'package:diary_flutter/models/bell_slot_model.dart';
 import 'package:diary_flutter/models/holiday_model.dart';
 import 'package:diary_flutter/models/homework_model.dart';
@@ -63,6 +65,19 @@ class FakeApiClient extends ApiClient {
   };
 }
 
+class FakeAutoSyncNotifier extends StateNotifier<AutoSyncState> implements AutoSyncService {
+  FakeAutoSyncNotifier() : super(const AutoSyncState(isAutoSyncEnabled: false, isOnline: true));
+
+  @override
+  Future<bool> syncAll({bool isManual = false}) async => true;
+
+  @override
+  Future<void> toggleAutoSync(bool enabled) async {}
+
+  @override
+  Future<void> setSyncInterval(int seconds) async {}
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -94,16 +109,22 @@ void main() {
             airRaidAlertProvider.overrideWith(
               (ref) => AirRaidAlertNotifier(autoStart: false),
             ),
+            autoSyncProvider.overrideWith(
+              (ref) => FakeAutoSyncNotifier(),
+            ),
           ],
           child: const DiaryApp(),
         ),
       );
 
-      // Pump a frame for initial layout and settle timers
+      // Pump a frame for initial layout
       await tester.pump();
-      await tester.pump(const Duration(seconds: 2));
+      await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(DiaryApp), findsOneWidget);
+
+      // Unmount cleanly to cancel any widget-level timers
+      await tester.pumpWidget(const SizedBox.shrink());
     } finally {
       await tester.runAsync(() async {
         await Hive.close();
