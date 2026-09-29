@@ -37,6 +37,8 @@ class MainScaffold extends ConsumerWidget {
     return Scaffold(
       extendBody: true,
       body: LiquidGlassView(
+        pixelRatio: 0.6,
+        refreshRate: LiquidGlassRefreshRate.medium,
         backgroundWidget: AmbientBackground(
           isDark: isDark,
           child: const SizedBox.expand(),

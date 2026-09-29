@@ -12,8 +12,19 @@ import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await HiveBoxes.init();
+
+  // Precompile liquid glass fragment programs ahead of time to eliminate startup / first-lens shader compilation jank
+  try {
+    await LiquidGlassShaders.ensureLoaded();
+  } catch (e) {
+    debugPrint('LiquidGlassShaders preload notice: $e');
+  }
+
+  // Optimize renderer pipelines:
+  // - On Skia (older Android / Web): use liteGlass fallback to eliminate heavy real-time refraction computations
+  // - On Impeller (modern Android / iOS): use compiled GPU refraction shaders with batched backdrop passes
   LiquidGlassEngine.liteGlassOnSkia = true;
-  LiquidGlassEngine.liteGlassOnImpeller = true;
+  LiquidGlassEngine.liteGlassOnImpeller = false;
   LiquidGlassEngine.litePickup = LiquidGlassLitePickup.blend;
   runApp(const ProviderScope(child: DiaryApp()));
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme/liquid_theme.dart';
 import '../../providers/homework_provider.dart';
@@ -47,9 +48,10 @@ class HomeworkScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () => ref.read(homeworkListProvider.notifier).fetchRemote(),
         color: LiquidTheme.accent,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
+        child: LiquidGlassBatch(
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
             // Filter chips header
             SliverToBoxAdapter(
               child: Padding(
@@ -120,7 +122,8 @@ class HomeworkScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildFilterChip(

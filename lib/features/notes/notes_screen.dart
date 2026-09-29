@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme/liquid_theme.dart';
 import '../../providers/notes_provider.dart';
@@ -46,9 +47,10 @@ class NotesScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () => ref.read(notesListProvider.notifier).fetchRemote(),
         color: LiquidTheme.accent,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
+        child: LiquidGlassBatch(
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
             // Search Bar
             SliverToBoxAdapter(
               child: Padding(
@@ -131,6 +133,7 @@ class NotesScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

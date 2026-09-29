@@ -20,13 +20,14 @@ class AirRaidBanner extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
       child: LiquidGlassLens(
-        style: LiquidGlassStyle(
-          shape: const LiquidGlassShape.continuousRoundedRectangle(cornerRadius: 16.0),
-          appearance: const LiquidGlassAppearance(
+        style: const LiquidGlassStyle(
+          shape: LiquidGlassShape.continuousRoundedRectangle(cornerRadius: 16.0),
+          appearance: LiquidGlassAppearance(
             color: Color(0x3DF43F5E), // Rose / Red frosted glass
-            blur: LiquidGlassBlur(sigmaX: 16.0, sigmaY: 16.0),
+            blur: LiquidGlassBlur(sigmaX: 6.0, sigmaY: 6.0),
           ),
-          refraction: const LiquidGlassRefraction(distortion: 0.05),
+          refraction: LiquidGlassRefraction(distortion: 0.05),
+          liteGlass: LiquidGlassLitePickup.blend,
         ),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),

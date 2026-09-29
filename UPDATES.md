@@ -1,5 +1,23 @@
 # Updates Log
 
+## [1.0.5] - 2026-09-29
+### Added & Optimized
+- **LiquidGlass Rendering & Shader Pipeline Optimizations**:
+  - **Batch Rendering with `LiquidGlassBatch`**: Wrapped scrollable views across `ScheduleScreen`, `HomeworkScreen`, `NotesScreen`, `StatsScreen`, and `SettingsScreen` in `LiquidGlassBatch`. Descendant lenses now share a single backdrop read and composite pass rather than each taking independent readbacks every frame, drastically reducing mobile GPU overhead.
+  - **Startup Shader Pre-compilation**: Integrated `LiquidGlassShaders.ensureLoaded()` in `main()` before `runApp()` to warm up lens, border, and blender fragment programs on application start, completely eliminating first-glass shader compilation jank.
+  - **Android Skia Performance Tuning**:
+    - Reduced `LiquidGlassView.pixelRatio` from default `1.0` to `0.6` in `MainScaffold`, reducing background capture pixel volume by 64% with negligible perceived difference under blur.
+    - Set `LiquidGlassView.refreshRate` to `LiquidGlassRefreshRate.medium` (~24 FPS) to prevent 60–120 FPS capture cycles from saturating CPU/GPU pipelines on high-refresh-rate displays.
+    - Reduced excessive blur sigmas across all styles to optimal Skia bounds (all $\le 7.0$): `cardStyle` reduced from 16.0 to 6.0, `pillStyle` reduced from 12.0 to 4.0, `navBarStyle` reduced from 24.0 to 7.0, `air_raid_banner` reduced from 16.0 to 6.0, and `week_selector` day chips reduced from 12.0 to 4.0.
+  - **LiteGlass Fallback Pipeline & Impeller Shader Activation**:
+    - Configured `LiquidGlassEngine.liteGlassOnSkia = true` with `LiquidGlassLitePickup.blend` so that older Android / Skia devices automatically fall back to lightweight frosted geometry without heavy real-time refraction passes.
+    - Configured `LiquidGlassEngine.liteGlassOnImpeller = false` so modern Impeller-enabled devices utilize hardware-accelerated shaders paired with `LiquidGlassBatch`.
+    - Added `liteGlass: LiquidGlassLitePickup.blend` to standalone styles (`air_raid_banner`, `week_selector`) to eliminate redundant backdrop reads during lite mode.
+  - **Ambient Mesh Painter Isolation**: Wrapped `AnimatedBuilder` inside `AmbientBackground` with an isolated `RepaintBoundary` to decouple background gradient canvas invalidations from foreground widget layers.
+- **Verification**:
+  - All unit and widget tests passing (10/10).
+  - 0 warnings, 0 errors in `flutter analyze`.
+
 ## [1.0.4] - 2026-09-28
 ### Added & Optimized
 - **Tailscale Tailnet IP Automatic Fallback & Dual-Probe Health System**:

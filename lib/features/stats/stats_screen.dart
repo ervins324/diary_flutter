@@ -32,9 +32,10 @@ class StatsScreen extends ConsumerWidget {
         ref.invalidate(weeklyStatsProvider);
       },
       color: LiquidTheme.accent,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
+      child: LiquidGlassBatch(
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
           // ── 1. Week Navigator ──────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
@@ -235,8 +236,9 @@ class StatsScreen extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildPillButton({
     IconData? icon,

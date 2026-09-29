@@ -61,11 +61,12 @@ class SettingsScreen extends ConsumerWidget {
     final loc = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    return LiquidGlassBatch(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           // ── Server Connection Card ────────────────────────────
           LiquidGlassLens(
             style: LiquidTheme.cardStyle(isDark: isDark, radius: 22),
@@ -610,6 +611,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

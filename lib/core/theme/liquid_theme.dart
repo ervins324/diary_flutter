@@ -38,7 +38,7 @@ class LiquidTheme {
         shape: LiquidGlassShape.continuousRoundedRectangle(cornerRadius: radius),
         appearance: LiquidGlassAppearance(
           color: isDark ? const Color(0x281E293B) : const Color(0x60FFFFFF),
-          blur: const LiquidGlassBlur(sigmaX: 16.0, sigmaY: 16.0),
+          blur: const LiquidGlassBlur(sigmaX: 6.0, sigmaY: 6.0),
         ),
         liteGlass: LiquidGlassLitePickup.blend,
       ),
@@ -54,7 +54,7 @@ class LiquidTheme {
         shape: LiquidGlassShape.continuousRoundedRectangle(cornerRadius: radius),
         appearance: LiquidGlassAppearance(
           color: isDark ? const Color(0x33334155) : const Color(0x66E2E8F0),
-          blur: const LiquidGlassBlur(sigmaX: 12.0, sigmaY: 12.0),
+          blur: const LiquidGlassBlur(sigmaX: 4.0, sigmaY: 4.0),
         ),
         liteGlass: LiquidGlassLitePickup.blend,
       ),
@@ -70,7 +70,7 @@ class LiquidTheme {
         shape: const LiquidGlassShape.continuousRoundedRectangle(cornerRadius: 32.0),
         appearance: LiquidGlassAppearance(
           color: isDark ? const Color(0x550F172A) : const Color(0x80FFFFFF),
-          blur: const LiquidGlassBlur(sigmaX: 24.0, sigmaY: 24.0),
+          blur: const LiquidGlassBlur(sigmaX: 7.0, sigmaY: 7.0),
         ),
         liteGlass: LiquidGlassLitePickup.blend,
       ),

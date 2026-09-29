@@ -120,9 +120,10 @@ class WeekSelector extends ConsumerWidget {
                           color: isSelected
                               ? (isDark ? const Color(0x666366F1) : const Color(0xCC6366F1))
                               : (isDark ? const Color(0x1A1E293B) : const Color(0x33CBD5E1)),
-                          blur: const LiquidGlassBlur(sigmaX: 12.0, sigmaY: 12.0),
+                          blur: const LiquidGlassBlur(sigmaX: 4.0, sigmaY: 4.0),
                         ),
                         refraction: const LiquidGlassRefraction(distortion: 0.04),
+                        liteGlass: LiquidGlassLitePickup.blend,
                       ),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),

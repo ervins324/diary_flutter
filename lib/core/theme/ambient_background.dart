@@ -57,18 +57,20 @@ class _AmbientBackgroundState extends State<AmbientBackground>
       child: Stack(
         fit: StackFit.expand,
         children: [
-          AnimatedBuilder(
-            animation: _controller,
-            builder: (context, _) {
-              return CustomPaint(
-                painter: AmbientMeshPainter(
-                  animationProgress: _controller.value,
-                  isDark: widget.isDark,
-                ),
-                isComplex: true,
-                willChange: true,
-              );
-            },
+          RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) {
+                return CustomPaint(
+                  painter: AmbientMeshPainter(
+                    animationProgress: _controller.value,
+                    isDark: widget.isDark,
+                  ),
+                  isComplex: true,
+                  willChange: true,
+                );
+              },
+            ),
           ),
           widget.child,
         ],

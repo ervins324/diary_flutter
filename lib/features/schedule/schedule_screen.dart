@@ -30,9 +30,10 @@ class ScheduleScreen extends ConsumerWidget {
         await ref.read(scheduleProvider.notifier).refresh(selectedDate);
       },
       color: LiquidTheme.accent,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
+      child: LiquidGlassBatch(
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
           // Live lesson tracker
           const SliverToBoxAdapter(
             child: LiveLessonWidget(),
@@ -282,6 +283,7 @@ class ScheduleScreen extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
