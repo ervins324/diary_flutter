@@ -150,6 +150,9 @@ class AutoSyncService extends StateNotifier<AutoSyncState> {
     try {
       // Step A: Fast health check
       final isHealthy = await _apiClient.checkHealth();
+      _ref.read(activeServerUrlProvider.notifier).state = _apiClient.activeBaseUrl;
+      _ref.read(isTailscaleActiveProvider.notifier).state = _apiClient.isTailscaleActive;
+
       if (!isHealthy) {
         if (_isDisposed || !mounted) return false;
         state = state.copyWith(

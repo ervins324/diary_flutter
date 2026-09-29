@@ -1,6 +1,6 @@
 {
-    "name": "diary_flutter",
-    "short_name": "diary_flutter",
+    "name": "Diary",
+    "short_name": "Diary",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

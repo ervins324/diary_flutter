@@ -18,6 +18,7 @@ class ServerSetupScreen extends ConsumerStatefulWidget {
 
 class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
   late final TextEditingController _urlController;
+  late final TextEditingController _tailscaleController;
   bool _isTesting = false;
   bool? _testSuccess;
   String? _statusMessage;
@@ -26,18 +27,22 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
   void initState() {
     super.initState();
     final currentUrl = ref.read(serverUrlProvider);
+    final currentTailscale = ref.read(tailscaleUrlProvider);
     _urlController = TextEditingController(text: currentUrl);
+    _tailscaleController = TextEditingController(text: currentTailscale);
   }
 
   @override
   void dispose() {
     _urlController.dispose();
+    _tailscaleController.dispose();
     super.dispose();
   }
 
   Future<void> _testConnection() async {
     final rawUrl = _urlController.text.trim();
-    if (rawUrl.isEmpty) return;
+    final rawTailscale = _tailscaleController.text.trim();
+    if (rawUrl.isEmpty && rawTailscale.isEmpty) return;
 
     setState(() {
       _isTesting = true;
@@ -45,35 +50,42 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
       _statusMessage = null;
     });
 
-    ref.read(serverConnectionProvider.notifier).updateServerUrl(rawUrl);
+    ref.read(serverConnectionProvider.notifier).updateUrls(
+          mainUrl: rawUrl.isNotEmpty ? rawUrl : null,
+          tailscaleUrl: rawTailscale,
+        );
     final ok = await ref.read(serverConnectionProvider.notifier).checkConnection();
 
     if (!mounted) return;
     final loc = AppLocalizations.of(context);
-    final apiErr = ref.read(apiClientProvider).lastHealthCheckError;
+    final api = ref.read(apiClientProvider);
+    final apiErr = api.lastHealthCheckError;
 
     setState(() {
       _isTesting = false;
       _testSuccess = ok;
-      _statusMessage = ok
-          ? loc.translate('connection_ok')
-          : (apiErr != null
-              ? '${loc.translate('connection_failed')}\n$apiErr'
-              : loc.translate('connection_failed'));
+      if (ok) {
+        if (api.isTailscaleActive) {
+          _statusMessage = '${loc.translate('connection_ok')} (${loc.translate('tailscale_active')})';
+        } else {
+          _statusMessage = loc.translate('connection_ok');
+        }
+      } else {
+        _statusMessage = apiErr != null
+            ? '${loc.translate('connection_failed')}\n$apiErr'
+            : loc.translate('connection_failed');
+      }
     });
   }
 
   void _saveAndProceed() {
     final rawUrl = _urlController.text.trim();
-    if (rawUrl.isNotEmpty) {
-      ref.read(serverUrlProvider.notifier).state = rawUrl;
-      ref.read(serverConnectionProvider.notifier).updateServerUrl(rawUrl);
-    }
-    if (widget.isOnboarding) {
-      Navigator.of(context).pop();
-    } else {
-      Navigator.of(context).pop();
-    }
+    final rawTailscale = _tailscaleController.text.trim();
+    ref.read(serverConnectionProvider.notifier).updateUrls(
+          mainUrl: rawUrl.isNotEmpty ? rawUrl : null,
+          tailscaleUrl: rawTailscale,
+        );
+    Navigator.of(context).pop();
   }
 
   @override
@@ -140,7 +152,7 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Server URL input field
+                      // Primary Server URL input field
                       TextField(
                         controller: _urlController,
                         style: TextStyle(
@@ -148,7 +160,8 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
                           fontSize: 15,
                         ),
                         decoration: InputDecoration(
-                          labelText: loc.translate('server_url'),
+                          labelText: loc.translate('primary_server'),
+                          hintText: 'http://192.168.1.100:8080',
                           labelStyle: TextStyle(
                             color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
                           ),
@@ -170,6 +183,48 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: const BorderSide(color: LiquidTheme.accent, width: 2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Tailscale Fallback URL input field
+                      TextField(
+                        controller: _tailscaleController,
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontSize: 15,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: loc.translate('tailscale_fallback'),
+                          hintText: loc.translate('tailscale_url_hint'),
+                          helperText: loc.translate('tailscale_desc'),
+                          helperMaxLines: 2,
+                          helperStyle: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                          ),
+                          labelStyle: TextStyle(
+                            color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
+                          ),
+                          prefixIcon: const Icon(Icons.vpn_lock_rounded, color: Colors.purpleAccent),
+                          filled: true,
+                          fillColor: isDark ? const Color(0x261E293B) : const Color(0x26FFFFFF),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(color: Colors.purpleAccent, width: 2),
                           ),
                         ),
                       ),

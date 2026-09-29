@@ -103,6 +103,13 @@ class HomeworkScreen extends ConsumerWidget {
                     final item = filtered[index];
                     return HomeworkCard(key: ValueKey(item.id), item: item);
                   },
+                  findChildIndexCallback: (Key key) {
+                    if (key is ValueKey<String>) {
+                      final idx = filtered.indexWhere((h) => h.id == key.value);
+                      return idx >= 0 ? idx : null;
+                    }
+                    return null;
+                  },
                   childCount: filtered.length,
                 ),
               ),

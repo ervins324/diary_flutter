@@ -1,5 +1,28 @@
 # Updates Log
 
+## [1.0.4] - 2026-09-28
+### Added & Optimized
+- **Tailscale Tailnet IP Automatic Fallback & Dual-Probe Health System**:
+  - Added configurable Tailscale / Tailnet fallback URL (`HiveBoxes.getTailscaleUrl`, `AppConfig.defaultTailscaleUrl`) allowing users to connect to their backend from anywhere outside home Wi-Fi.
+  - Implemented dual-probe health checking in `ApiClient.checkHealth()`: tests primary LAN server first with fast 3-second timeout; if primary fails or times out, immediately and seamlessly falls back to Tailscale Tailnet IP.
+  - Integrated `TailscaleFallbackInterceptor` into Dio to automatically catch mid-session connection timeouts/socket failures on primary LAN and auto-retry seamlessly over Tailscale without dropping mutations or sync tasks.
+  - Updated `ServerSetupScreen` and `SettingsScreen` with dedicated Primary and Tailscale input fields, independent health probes, and active fallback status badges.
+  - Added bilingual translations in Ukrainian (`uk`) and English (`en`) for Tailscale fallback configuration, active status indicators, and error diagnostics.
+  - Updated `AttachmentHelper.resolveUrl()` to use `HiveBoxes.getActiveServerUrl()` so image and document attachments resolve reliably whether connected via LAN or Tailscale.
+- **Application Display Name Refinement**:
+  - Changed Android application launcher label from `diary_flutter` to `Diary` in `AndroidManifest.xml`.
+  - Aligned display names in `Info.plist`, `web/manifest.json`, `web/index.html`, and `AppConfig.appName`.
+- **Comprehensive Performance & Battery Optimizations**:
+  - **AmbientBackground Lifecycle & Paint Recycling**: Added `AppLifecycleListener` to pause the 30-second gradient animation controller when the application is minimized, paused, or hidden, eliminating wasted GPU/CPU cycles in the background. Recycled static `Paint` instances in `AmbientMeshPainter` to prevent ~240 object allocations per second.
+  - **Air Raid Alerts Background Pause**: Added `AppLifecycleListener` in `AirRaidAlertNotifier` to pause the 30-second HTTP polling timer and WebSocket reconnection when the application is backgrounded or hidden, mirroring web client behavior and saving mobile bandwidth and battery.
+  - **LiveLessonWidget Lifecycle Management**: Paused the 15-second countdown timer in `LiveLessonWidget` while the app is in the background, resuming immediately upon returning to foreground.
+  - **Scaffold Rebuild Isolation**: Refactored `MainScaffold` to extract `_ConnectionSyncBadge` and `_BottomGlassNavBar` into dedicated, self-contained widgets, preventing auto-sync state updates from triggering whole-page rebuilds of `LiquidGlassView` and navigation layouts.
+  - **List Reconciliation with `findChildIndexCallback`**: Added `findChildIndexCallback` and explicit keys across `ScheduleScreen`, `HomeworkScreen`, and `NotesScreen` `SliverChildBuilderDelegate`s for fast child element recycling during list mutations.
+  - **LiquidTheme Style Caching**: Introduced a static style cache in `LiquidTheme` (`cardStyle`, `pillStyle`, `navBarStyle`) to avoid reallocating `LiquidGlassStyle` objects on every widget build.
+- **Verification & Test Coverage**:
+  - Created `test/api_failover_test.dart` covering URL normalization, Tailscale configuration persistence, and failover states.
+  - Maintained 0 warnings and 0 errors in `flutter analyze` and 100% test pass rate across all suites.
+
 ## [1.0.3] - 2026-09-25
 ### Fixed & Improved
 - **Release Mode Server Connection**: Fixed failure to connect to the Docker backend (`http://<LAN_IP>:8080`) in Android release mode:

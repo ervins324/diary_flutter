@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../core/config/app_config.dart';
@@ -38,13 +39,37 @@ class AirRaidAlertNotifier extends StateNotifier<AirRaidAlertState> {
   WebSocketChannel? _channel;
   Timer? _pollingTimer;
   Timer? _reconnectTimer;
+  AppLifecycleListener? _lifecycleListener;
   final Dio _dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 5)));
 
   AirRaidAlertNotifier({bool autoStart = true})
       : super(AirRaidAlertState(activeRegion: HiveBoxes.getAlertRegion())) {
     if (autoStart) {
       _startMonitoring();
+      _setupLifecycleListener();
     }
+  }
+
+  void _setupLifecycleListener() {
+    _lifecycleListener = AppLifecycleListener(
+      onPause: () {
+        _pollingTimer?.cancel();
+        _reconnectTimer?.cancel();
+      },
+      onHide: () {
+        _pollingTimer?.cancel();
+        _reconnectTimer?.cancel();
+      },
+      onResume: () {
+        if (mounted) {
+          checkHttpFallback();
+          _pollingTimer?.cancel();
+          _pollingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+            checkHttpFallback();
+          });
+        }
+      },
+    );
   }
 
   void updateRegion(String newRegion) {
@@ -155,6 +180,7 @@ class AirRaidAlertNotifier extends StateNotifier<AirRaidAlertState> {
 
   @override
   void dispose() {
+    _lifecycleListener?.dispose();
     _channel?.sink.close();
     _pollingTimer?.cancel();
     _reconnectTimer?.cancel();

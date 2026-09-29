@@ -18,10 +18,28 @@ class LiveLessonWidget extends ConsumerStatefulWidget {
 
 class _LiveLessonWidgetState extends ConsumerState<LiveLessonWidget> {
   Timer? _timer;
+  late final AppLifecycleListener _lifecycleListener;
 
   @override
   void initState() {
     super.initState();
+    _startTimer();
+
+    // Lifecycle optimization: pause countdown timer when app is hidden or backgrounded
+    _lifecycleListener = AppLifecycleListener(
+      onPause: () => _timer?.cancel(),
+      onHide: () => _timer?.cancel(),
+      onResume: () {
+        if (mounted) {
+          setState(() {});
+          _startTimer();
+        }
+      },
+    );
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
     // Update live countdown every 15 seconds
     _timer = Timer.periodic(const Duration(seconds: 15), (_) {
       if (mounted) setState(() {});
@@ -30,6 +48,7 @@ class _LiveLessonWidgetState extends ConsumerState<LiveLessonWidget> {
 
   @override
   void dispose() {
+    _lifecycleListener.dispose();
     _timer?.cancel();
     super.dispose();
   }

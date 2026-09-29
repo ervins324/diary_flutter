@@ -172,7 +172,9 @@ class ScheduleScreen extends ConsumerWidget {
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final lesson = sortedLessons[index];
+                    final keyVal = '${lesson.lessonOrder}_${lesson.startTime}';
                     return LessonSlotCard(
+                      key: ValueKey(keyVal),
                       lesson: lesson,
                       onTap: () {
                         showModalBottomSheet(
@@ -183,6 +185,15 @@ class ScheduleScreen extends ConsumerWidget {
                         );
                       },
                     );
+                  },
+                  findChildIndexCallback: (Key key) {
+                    if (key is ValueKey<String>) {
+                      final idx = sortedLessons.indexWhere(
+                        (l) => '${l.lessonOrder}_${l.startTime}' == key.value,
+                      );
+                      return idx >= 0 ? idx : null;
+                    }
+                    return null;
                   },
                   childCount: sortedLessons.length,
                 ),

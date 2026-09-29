@@ -18,7 +18,7 @@ class AttachmentHelper {
 
     // Relative server path (e.g. /api/v1/files/UUID)
     if (trimmed.startsWith('/')) {
-      final serverUrl = HiveBoxes.getServerUrl();
+      final serverUrl = HiveBoxes.getActiveServerUrl();
       final base = serverUrl.endsWith('/')
           ? serverUrl.substring(0, serverUrl.length - 1)
           : serverUrl;

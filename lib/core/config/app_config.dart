@@ -1,15 +1,18 @@
 /// Central configuration constants for the Diary mobile application.
 class AppConfig {
-  static const String appName = 'School Diary';
-  static const String appVersion = '1.0.3';
+  static const String appName = 'Diary';
+  static const String appVersion = '1.0.4';
 
   // Default server base URL (Nginx reverse proxy on port 8080)
   static const String defaultServerUrl = 'http://192.168.1.100:8080';
+  // Default Tailscale / Tailnet IP fallback URL (optional, e.g. http://100.x.y.z:8080)
+  static const String defaultTailscaleUrl = '';
   static const String apiPrefix = '/api/v1';
 
   // Network timeouts
   static const Duration connectTimeout = Duration(seconds: 8);
   static const Duration receiveTimeout = Duration(seconds: 15);
+  static const Duration fastHealthCheckTimeout = Duration(seconds: 3);
 
   // Hive Box Names
   static const String boxSettings = 'diary_settings';

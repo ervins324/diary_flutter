@@ -43,6 +43,22 @@ class HiveBoxes {
     await _settingsBox.put('server_url', url);
   }
 
+  static String getTailscaleUrl() {
+    return _settingsBox.get('tailscale_url', defaultValue: AppConfig.defaultTailscaleUrl) as String;
+  }
+
+  static Future<void> setTailscaleUrl(String url) async {
+    await _settingsBox.put('tailscale_url', url);
+  }
+
+  static String getActiveServerUrl() {
+    return _settingsBox.get('active_server_url', defaultValue: getServerUrl()) as String;
+  }
+
+  static Future<void> setActiveServerUrl(String url) async {
+    await _settingsBox.put('active_server_url', url);
+  }
+
   static String getLanguage() {
     return _settingsBox.get('language', defaultValue: 'uk') as String;
   }

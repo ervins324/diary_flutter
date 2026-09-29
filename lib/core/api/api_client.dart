@@ -10,25 +10,54 @@ import '../../models/schedule_model.dart';
 import '../../models/holiday_model.dart';
 
 /// Centralized HTTP client managing communication with the Diary FastAPI backend.
+/// Supports automatic failover to Tailscale Tailnet IP when primary LAN server fails.
 class ApiClient {
   late Dio _dio;
-  String _currentBaseUrl = '';
+  String _mainBaseUrl = '';
+  String _tailscaleBaseUrl = '';
+  String _activeBaseUrl = '';
+  bool _isTailscaleActive = false;
   String? lastHealthCheckError;
+  String? lastTailscaleCheckError;
 
   ApiClient([Dio? customDio]) {
     if (customDio != null) {
       _dio = customDio;
-      _currentBaseUrl = customDio.options.baseUrl;
+      _activeBaseUrl = customDio.options.baseUrl;
+      _mainBaseUrl = _activeBaseUrl;
     } else {
       _initDio();
     }
   }
 
+  /// Cleans and formats raw server URLs.
+  static String normalizeUrl(String raw) {
+    var formatted = raw.trim();
+    if (formatted.isNotEmpty && !formatted.startsWith('http://') && !formatted.startsWith('https://')) {
+      formatted = 'http://$formatted';
+    }
+    if (formatted.endsWith('/')) {
+      formatted = formatted.substring(0, formatted.length - 1);
+    }
+    return formatted;
+  }
+
   void _initDio() {
-    _currentBaseUrl = HiveBoxes.getServerUrl();
+    _mainBaseUrl = normalizeUrl(HiveBoxes.getServerUrl());
+    _tailscaleBaseUrl = normalizeUrl(HiveBoxes.getTailscaleUrl());
+
+    final savedActive = normalizeUrl(HiveBoxes.getActiveServerUrl());
+    if (savedActive.isNotEmpty && savedActive == _tailscaleBaseUrl && _tailscaleBaseUrl.isNotEmpty) {
+      _activeBaseUrl = _tailscaleBaseUrl;
+      _isTailscaleActive = true;
+    } else {
+      _activeBaseUrl = _mainBaseUrl.isNotEmpty ? _mainBaseUrl : AppConfig.defaultServerUrl;
+      _isTailscaleActive = false;
+    }
+
     _dio = Dio(
       BaseOptions(
-        baseUrl: _currentBaseUrl,
+        baseUrl: _activeBaseUrl,
         connectTimeout: AppConfig.connectTimeout,
         receiveTimeout: AppConfig.receiveTimeout,
         headers: {
@@ -37,41 +66,112 @@ class ApiClient {
         },
       ),
     );
+
+    // Failover interceptor: automatically retries with Tailscale IP if main server fails mid-flight
+    _dio.interceptors.add(_buildFailoverInterceptor());
   }
 
-  /// Reconfigure Dio when user changes server URL in Settings.
+  InterceptorsWrapper _buildFailoverInterceptor() {
+    return InterceptorsWrapper(
+      onError: (DioException err, ErrorInterceptorHandler handler) async {
+        final isConnectionIssue = err.type == DioExceptionType.connectionTimeout ||
+            err.type == DioExceptionType.sendTimeout ||
+            err.type == DioExceptionType.receiveTimeout ||
+            err.type == DioExceptionType.connectionError;
+
+        if (isConnectionIssue &&
+            _tailscaleBaseUrl.isNotEmpty &&
+            !_isTailscaleActive) {
+          // Switch to Tailscale fallback
+          _switchToUrl(_tailscaleBaseUrl, isTailscale: true);
+
+          try {
+            final opts = Options(
+              method: err.requestOptions.method,
+              headers: err.requestOptions.headers,
+              contentType: err.requestOptions.contentType,
+              responseType: err.requestOptions.responseType,
+              validateStatus: err.requestOptions.validateStatus,
+            );
+
+            var path = err.requestOptions.path;
+            if (path.startsWith(_mainBaseUrl)) {
+              path = path.substring(_mainBaseUrl.length);
+            }
+
+            final retryResponse = await _dio.request(
+              path,
+              data: err.requestOptions.data,
+              queryParameters: err.requestOptions.queryParameters,
+              options: opts,
+            );
+            return handler.resolve(retryResponse);
+          } catch (retryErr) {
+            if (retryErr is DioException) {
+              return handler.next(retryErr);
+            }
+          }
+        }
+        return handler.next(err);
+      },
+    );
+  }
+
+  void _switchToUrl(String targetUrl, {required bool isTailscale}) {
+    _activeBaseUrl = targetUrl;
+    _isTailscaleActive = isTailscale;
+    _dio.options.baseUrl = targetUrl;
+    HiveBoxes.setActiveServerUrl(targetUrl);
+  }
+
+  /// Reconfigure URLs when user updates settings.
+  void updateUrls({String? mainUrl, String? tailscaleUrl}) {
+    if (mainUrl != null) {
+      _mainBaseUrl = normalizeUrl(mainUrl);
+      HiveBoxes.setServerUrl(_mainBaseUrl);
+    }
+    if (tailscaleUrl != null) {
+      _tailscaleBaseUrl = normalizeUrl(tailscaleUrl);
+      HiveBoxes.setTailscaleUrl(_tailscaleBaseUrl);
+    }
+    // Prefer main URL upon explicit reconfiguration
+    _switchToUrl(_mainBaseUrl, isTailscale: false);
+  }
+
+  /// Reconfigure Dio when user changes main server URL in Settings.
   void updateBaseUrl(String newUrl) {
-    var formatted = newUrl.trim();
-    if (formatted.isNotEmpty && !formatted.startsWith('http://') && !formatted.startsWith('https://')) {
-      formatted = 'http://$formatted';
-    }
-    if (formatted.endsWith('/')) {
-      formatted = formatted.substring(0, formatted.length - 1);
-    }
-    _currentBaseUrl = formatted;
-    HiveBoxes.setServerUrl(formatted);
-    _initDio();
+    updateUrls(mainUrl: newUrl);
   }
 
-  String get currentBaseUrl => _currentBaseUrl;
+  /// Reconfigure Tailscale fallback URL in Settings.
+  void updateTailscaleUrl(String newUrl) {
+    updateUrls(tailscaleUrl: newUrl);
+  }
+
+  String get currentBaseUrl => _activeBaseUrl;
+  String get activeBaseUrl => _activeBaseUrl;
+  String get mainBaseUrl => _mainBaseUrl;
+  String get tailscaleBaseUrl => _tailscaleBaseUrl;
+  bool get isTailscaleActive => _isTailscaleActive && _tailscaleBaseUrl.isNotEmpty;
 
   /// Formats DioException into human-friendly explanation
-  String _formatDioError(dynamic e) {
+  String _formatDioError(dynamic e, [String? url]) {
+    final effectiveUrl = url ?? _activeBaseUrl;
     if (e is DioException) {
       switch (e.type) {
         case DioExceptionType.connectionTimeout:
-          return 'Connection timeout to $_currentBaseUrl (Check Wi-Fi / IP)';
+          return 'Connection timeout to $effectiveUrl (Check Wi-Fi / IP)';
         case DioExceptionType.sendTimeout:
-          return 'Send timeout to $_currentBaseUrl';
+          return 'Send timeout to $effectiveUrl';
         case DioExceptionType.receiveTimeout:
-          return 'Receive timeout from $_currentBaseUrl';
+          return 'Receive timeout from $effectiveUrl';
         case DioExceptionType.badResponse:
           return 'HTTP ${e.response?.statusCode}: ${e.response?.statusMessage ?? 'Bad response'}';
         case DioExceptionType.connectionError:
           final detail = e.error != null ? ' [${e.error}]' : '';
-          final isLocalhost = _currentBaseUrl.contains('localhost') || _currentBaseUrl.contains('127.0.0.1');
+          final isLocalhost = effectiveUrl.contains('localhost') || effectiveUrl.contains('127.0.0.1');
           final localhostHint = isLocalhost ? ' (On mobile use PC LAN IP, not localhost)' : '';
-          return 'Cannot connect to $_currentBaseUrl$detail$localhostHint (Check Docker port 8080 & LAN IP)';
+          return 'Cannot connect to $effectiveUrl$detail$localhostHint';
         case DioExceptionType.cancel:
           return 'Request cancelled';
         default:
@@ -81,32 +181,41 @@ class ApiClient {
     return e.toString();
   }
 
-  /// Fast health check to test if server is reachable.
-  Future<bool> checkHealth() async {
-    lastHealthCheckError = null;
+  /// Fast probe helper targeting a specific server URL
+  Future<bool> _probeServer(String targetUrl) async {
+    if (targetUrl.isEmpty) return false;
     try {
-      final res = await _dio.get(
+      final probeDio = Dio(
+        BaseOptions(
+          baseUrl: targetUrl,
+          connectTimeout: AppConfig.fastHealthCheckTimeout,
+          receiveTimeout: AppConfig.fastHealthCheckTimeout,
+        ),
+      );
+      final res = await probeDio.get(
         '${AppConfig.apiPrefix}/subjects',
         options: Options(
-          connectTimeout: const Duration(seconds: 6),
-          receiveTimeout: const Duration(seconds: 6),
           validateStatus: (status) => status != null && status < 500,
         ),
       );
       if (res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 400) {
         return true;
       }
-      lastHealthCheckError = 'Server returned HTTP ${res.statusCode}';
     } catch (e) {
-      lastHealthCheckError = _formatDioError(e);
+      lastHealthCheckError = _formatDioError(e, targetUrl);
     }
 
     try {
-      final res = await _dio.get(
+      final probeDio = Dio(
+        BaseOptions(
+          baseUrl: targetUrl,
+          connectTimeout: AppConfig.fastHealthCheckTimeout,
+          receiveTimeout: AppConfig.fastHealthCheckTimeout,
+        ),
+      );
+      final res = await probeDio.get(
         '/',
         options: Options(
-          connectTimeout: const Duration(seconds: 6),
-          receiveTimeout: const Duration(seconds: 6),
           validateStatus: (status) => status != null && status < 500,
         ),
       );
@@ -116,6 +225,57 @@ class ApiClient {
       }
     } catch (_) {}
 
+    return false;
+  }
+
+  /// Explicitly check primary LAN server health
+  Future<bool> checkMainHealth() async {
+    return await _probeServer(_mainBaseUrl);
+  }
+
+  /// Explicitly check Tailscale fallback server health
+  Future<bool> checkTailscaleHealth() async {
+    lastTailscaleCheckError = null;
+    if (_tailscaleBaseUrl.isEmpty) {
+      lastTailscaleCheckError = 'Tailscale URL not configured';
+      return false;
+    }
+    final ok = await _probeServer(_tailscaleBaseUrl);
+    if (!ok && lastHealthCheckError != null) {
+      lastTailscaleCheckError = lastHealthCheckError;
+    }
+    return ok;
+  }
+
+  /// Intelligent dual health check:
+  /// 1. Tries primary main server.
+  /// 2. If main fails, seamlessly falls back to Tailscale Tailnet IP if configured.
+  Future<bool> checkHealth() async {
+    lastHealthCheckError = null;
+    lastTailscaleCheckError = null;
+
+    // 1. Probe primary main server
+    final mainSuccess = await _probeServer(_mainBaseUrl);
+    if (mainSuccess) {
+      _switchToUrl(_mainBaseUrl, isTailscale: false);
+      return true;
+    }
+
+    final mainErr = lastHealthCheckError ?? 'Main server unreachable ($_mainBaseUrl)';
+
+    // 2. If primary failed, attempt Tailscale Tailnet fallback
+    if (_tailscaleBaseUrl.isNotEmpty && _tailscaleBaseUrl != _mainBaseUrl) {
+      final tailscaleSuccess = await _probeServer(_tailscaleBaseUrl);
+      if (tailscaleSuccess) {
+        _switchToUrl(_tailscaleBaseUrl, isTailscale: true);
+        lastHealthCheckError = null;
+        return true;
+      }
+      lastHealthCheckError = '$mainErr\nFallback: ${lastHealthCheckError ?? "Tailscale unreachable"}';
+      return false;
+    }
+
+    lastHealthCheckError = mainErr;
     return false;
   }
 

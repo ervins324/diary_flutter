@@ -21,6 +21,7 @@ class AmbientBackground extends StatefulWidget {
 class _AmbientBackgroundState extends State<AmbientBackground>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  late final AppLifecycleListener _lifecycleListener;
 
   @override
   void initState() {
@@ -30,10 +31,22 @@ class _AmbientBackgroundState extends State<AmbientBackground>
       vsync: this,
       duration: const Duration(seconds: 30),
     )..repeat();
+
+    // Lifecycle optimization: pause animation ticker when app is backgrounded or hidden
+    _lifecycleListener = AppLifecycleListener(
+      onPause: () => _controller.stop(),
+      onHide: () => _controller.stop(),
+      onResume: () {
+        if (mounted && !_controller.isAnimating) {
+          _controller.repeat();
+        }
+      },
+    );
   }
 
   @override
   void dispose() {
+    _lifecycleListener.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -65,9 +78,16 @@ class _AmbientBackgroundState extends State<AmbientBackground>
 }
 
 /// Lightweight canvas painter that renders soft ambient orbs directly to GPU.
+/// Uses recycled Paint instances to eliminate per-frame heap allocations.
 class AmbientMeshPainter extends CustomPainter {
   final double animationProgress;
   final bool isDark;
+
+  // Cached Paint objects to avoid garbage collection churn
+  static final Paint _basePaint = Paint();
+  static final Paint _paint1 = Paint();
+  static final Paint _paint2 = Paint();
+  static final Paint _paint3 = Paint();
 
   AmbientMeshPainter({
     required this.animationProgress,
@@ -79,9 +99,8 @@ class AmbientMeshPainter extends CustomPainter {
     if (size.width <= 0 || size.height <= 0) return;
 
     // 1. Base solid background
-    final basePaint = Paint()
-      ..color = isDark ? const Color(0xFF090D16) : const Color(0xFFF1F5F9);
-    canvas.drawRect(Offset.zero & size, basePaint);
+    _basePaint.color = isDark ? const Color(0xFF090D16) : const Color(0xFFF1F5F9);
+    canvas.drawRect(Offset.zero & size, _basePaint);
 
     final t = animationProgress * 2 * math.pi;
 
@@ -91,15 +110,14 @@ class AmbientMeshPainter extends CustomPainter {
       size.height * 0.12 + math.sin(t) * 40,
     );
     const r1 = 160.0;
-    final paint1 = Paint()
-      ..shader = ui.Gradient.radial(
-        c1,
-        r1,
-        isDark
-            ? const [Color(0x664F46E5), Color(0x004F46E5)]
-            : const [Color(0x446366F1), Color(0x006366F1)],
-      );
-    canvas.drawCircle(c1, r1, paint1);
+    _paint1.shader = ui.Gradient.radial(
+      c1,
+      r1,
+      isDark
+          ? const [Color(0x664F46E5), Color(0x004F46E5)]
+          : const [Color(0x446366F1), Color(0x006366F1)],
+    );
+    canvas.drawCircle(c1, r1, _paint1);
 
     // 3. Animated orb 2 (Purple / Fuchsia)
     final c2 = Offset(
@@ -107,15 +125,14 @@ class AmbientMeshPainter extends CustomPainter {
       size.height * 0.78 + math.cos(t * 0.8) * 45,
     );
     const r2 = 180.0;
-    final paint2 = Paint()
-      ..shader = ui.Gradient.radial(
-        c2,
-        r2,
-        isDark
-            ? const [Color(0x559333EA), Color(0x009333EA)]
-            : const [Color(0x35A855F7), Color(0x00A855F7)],
-      );
-    canvas.drawCircle(c2, r2, paint2);
+    _paint2.shader = ui.Gradient.radial(
+      c2,
+      r2,
+      isDark
+          ? const [Color(0x559333EA), Color(0x009333EA)]
+          : const [Color(0x35A855F7), Color(0x00A855F7)],
+    );
+    canvas.drawCircle(c2, r2, _paint2);
 
     // 4. Animated orb 3 (Cyan / Sky)
     final c3 = Offset(
@@ -123,15 +140,14 @@ class AmbientMeshPainter extends CustomPainter {
       size.height * 0.45 + math.sin(t * 1.2) * 50,
     );
     const r3 = 140.0;
-    final paint3 = Paint()
-      ..shader = ui.Gradient.radial(
-        c3,
-        r3,
-        isDark
-            ? const [Color(0x4406B6D4), Color(0x0006B6D4)]
-            : const [Color(0x280284C7), Color(0x000284C7)],
-      );
-    canvas.drawCircle(c3, r3, paint3);
+    _paint3.shader = ui.Gradient.radial(
+      c3,
+      r3,
+      isDark
+          ? const [Color(0x4406B6D4), Color(0x0006B6D4)]
+          : const [Color(0x280284C7), Color(0x000284C7)],
+    );
+    canvas.drawCircle(c3, r3, _paint3);
   }
 
   @override

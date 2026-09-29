@@ -114,6 +114,13 @@ class NotesScreen extends ConsumerWidget {
                     final note = filtered[index];
                     return NoteCard(key: ValueKey(note.id), note: note);
                   },
+                  findChildIndexCallback: (Key key) {
+                    if (key is ValueKey<String>) {
+                      final idx = filtered.indexWhere((n) => n.id == key.value);
+                      return idx >= 0 ? idx : null;
+                    }
+                    return null;
+                  },
                   childCount: filtered.length,
                 ),
               ),

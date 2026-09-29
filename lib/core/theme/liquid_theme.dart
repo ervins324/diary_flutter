@@ -26,39 +26,54 @@ class LiquidTheme {
   static const Color lightTextSecondary = Color(0xFF475569);
   static const Color lightTextMuted = Color(0xFF94A3B8);
 
+  // Cached style instances to avoid object allocation during list builds
+  static final Map<String, LiquidGlassStyle> _styleCache = {};
+
   /// Predefined LiquidGlassStyle for primary cards (lessons, homework, notes)
   static LiquidGlassStyle cardStyle({bool isDark = true, double radius = 20.0}) {
-    return LiquidGlassStyle(
-      shape: LiquidGlassShape.continuousRoundedRectangle(cornerRadius: radius),
-      appearance: LiquidGlassAppearance(
-        color: isDark ? const Color(0x281E293B) : const Color(0x60FFFFFF),
-        blur: const LiquidGlassBlur(sigmaX: 16.0, sigmaY: 16.0),
+    final key = 'card_${isDark}_$radius';
+    return _styleCache.putIfAbsent(
+      key,
+      () => LiquidGlassStyle(
+        shape: LiquidGlassShape.continuousRoundedRectangle(cornerRadius: radius),
+        appearance: LiquidGlassAppearance(
+          color: isDark ? const Color(0x281E293B) : const Color(0x60FFFFFF),
+          blur: const LiquidGlassBlur(sigmaX: 16.0, sigmaY: 16.0),
+        ),
+        liteGlass: LiquidGlassLitePickup.blend,
       ),
-      liteGlass: LiquidGlassLitePickup.blend,
     );
   }
 
   /// Predefined LiquidGlassStyle for small badges, chips, and pills
   static LiquidGlassStyle pillStyle({bool isDark = true, double radius = 12.0}) {
-    return LiquidGlassStyle(
-      shape: LiquidGlassShape.continuousRoundedRectangle(cornerRadius: radius),
-      appearance: LiquidGlassAppearance(
-        color: isDark ? const Color(0x33334155) : const Color(0x66E2E8F0),
-        blur: const LiquidGlassBlur(sigmaX: 12.0, sigmaY: 12.0),
+    final key = 'pill_${isDark}_$radius';
+    return _styleCache.putIfAbsent(
+      key,
+      () => LiquidGlassStyle(
+        shape: LiquidGlassShape.continuousRoundedRectangle(cornerRadius: radius),
+        appearance: LiquidGlassAppearance(
+          color: isDark ? const Color(0x33334155) : const Color(0x66E2E8F0),
+          blur: const LiquidGlassBlur(sigmaX: 12.0, sigmaY: 12.0),
+        ),
+        liteGlass: LiquidGlassLitePickup.blend,
       ),
-      liteGlass: LiquidGlassLitePickup.blend,
     );
   }
 
   /// LiquidGlassStyle for navigation bars and floating headers
   static LiquidGlassStyle navBarStyle({bool isDark = true}) {
-    return LiquidGlassStyle(
-      shape: const LiquidGlassShape.continuousRoundedRectangle(cornerRadius: 32.0),
-      appearance: LiquidGlassAppearance(
-        color: isDark ? const Color(0x550F172A) : const Color(0x80FFFFFF),
-        blur: const LiquidGlassBlur(sigmaX: 24.0, sigmaY: 24.0),
+    final key = 'navbar_$isDark';
+    return _styleCache.putIfAbsent(
+      key,
+      () => LiquidGlassStyle(
+        shape: const LiquidGlassShape.continuousRoundedRectangle(cornerRadius: 32.0),
+        appearance: LiquidGlassAppearance(
+          color: isDark ? const Color(0x550F172A) : const Color(0x80FFFFFF),
+          blur: const LiquidGlassBlur(sigmaX: 24.0, sigmaY: 24.0),
+        ),
+        liteGlass: LiquidGlassLitePickup.blend,
       ),
-      liteGlass: LiquidGlassLitePickup.blend,
     );
   }
 }

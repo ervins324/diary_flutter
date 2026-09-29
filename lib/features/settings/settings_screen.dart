@@ -47,6 +47,8 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final serverUrl = ref.watch(serverUrlProvider);
+    final tailscaleUrl = ref.watch(tailscaleUrlProvider);
+    final isTailscaleActive = ref.watch(isTailscaleActiveProvider);
     final connStatus = ref.watch(serverConnectionProvider);
     final syncQueueState = ref.watch(syncQueueProvider).state;
     final autoSyncState = ref.watch(autoSyncProvider);
@@ -83,10 +85,16 @@ class SettingsScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: LiquidTheme.accent.withValues(alpha: 0.15),
+                          color: isTailscaleActive
+                              ? Colors.purple.withValues(alpha: 0.2)
+                              : LiquidTheme.accent.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.dns_rounded, size: 20, color: LiquidTheme.accentLight),
+                        child: Icon(
+                          isTailscaleActive ? Icons.vpn_lock_rounded : Icons.dns_rounded,
+                          size: 20,
+                          color: isTailscaleActive ? Colors.purpleAccent : LiquidTheme.accentLight,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -103,12 +111,22 @@ class SettingsScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              serverUrl,
+                              '${loc.translate('primary_server')}: $serverUrl',
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 11,
                                 color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
                               ),
                             ),
+                            if (tailscaleUrl.isNotEmpty) ...[
+                              const SizedBox(height: 1),
+                              Text(
+                                '${loc.translate('fallback_server')}: $tailscaleUrl',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -120,7 +138,7 @@ class SettingsScreen extends ConsumerWidget {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: connStatus == ConnectionStatus.connected
-                              ? LiquidTheme.success
+                              ? (isTailscaleActive ? Colors.purpleAccent : LiquidTheme.success)
                               : (connStatus == ConnectionStatus.checking
                                   ? LiquidTheme.warning
                                   : LiquidTheme.danger),
@@ -128,6 +146,35 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
+
+                  // Tailscale Active badge if fallback in use
+                  if (connStatus == ConnectionStatus.connected && isTailscaleActive) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.purple.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.purpleAccent.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.alt_route_rounded, size: 14, color: Colors.purpleAccent),
+                          const SizedBox(width: 6),
+                          Text(
+                            loc.translate('tailscale_active'),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.purpleAccent,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
                   const SizedBox(height: 16),
 
                   Row(
