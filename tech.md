@@ -1,8 +1,10 @@
 # tech.md: Frozen Technical Specification & Core Contract
 
-Version: v1.0.6
+Version: v1.0.8
 Last Updated: 2026-09-30
 Changelog:
+- v1.0.8 (2026-09-30): Documented FileDownloadHelper contract (Base64 decode, /api/v1/files/ downloading, local copy, Downloads folder resolution) and wipeAllLocalData complete client-side storage purge contract.
+- v1.0.7 (2026-09-30): Added schedule temporal overrides (POST/DELETE /schedule/override) and adjacent lesson fast navigation (GET /schedule/next-lesson, GET /schedule/previous-lesson) contracts.
 - v1.0.6 (2026-09-30): Documented display settings parity keys (show_classrooms, skip_weekends_to_monday, performance_mode) and performance mode rendering architecture.
 - v1.0.5 (2026-09-30): Initial frozen core specification for solo session-consistent build.
 
@@ -128,10 +130,15 @@ Every feature imports and composes these shared primitives rather than reimpleme
 - `diary_homework`: Box storing `HomeworkModel` records keyed by `homework.id`.
 - `diary_notes`: Box storing `LessonNoteModel` records keyed by `note.id`.
 - `diary_subjects`: Box storing `SubjectModel` records keyed by `subject.id`.
+- `diary_holidays`: Box storing `HolidayModel` records keyed by `holiday.id`.
 - `diary_settings`: Box storing raw configuration keys and values (`server_url`, `tailscale_url`, `language`, `theme_mode`, `alert_region`, `show_classrooms`, `skip_weekends_to_monday`, `performance_mode`).
 - `diary_sync_queue`: Box storing `SyncActionModel` records keyed by `action.id`.
 
-### 5.2 Model Field Schemas
+### 5.2 Local Storage Purge & File Download Contract
+- `HiveBoxes.wipeAllLocalData()`: Clears all 7 data boxes (`diary_bells`, `diary_schedule`, `diary_homework`, `diary_notes`, `diary_subjects`, `diary_holidays`, `diary_sync_queue`), clears `last_sync_timestamp`, and deletes all staged attachment files on disk (`hw_*`, `doc_*`, `diary_*`).
+- `FileDownloadHelper`: Downloads and saves Base64 data URLs, server stored files (`/api/v1/files/{id}`), and local files to the public `Downloads` directory (`/storage/emulated/0/Download` on Android, with fallback to `getApplicationDocumentsDirectory()`), preventing overwriting by appending counter suffixes (`file (1).ext`) and providing user feedback via `ScaffoldMessenger`.
+
+### 5.3 Model Field Schemas
 
 #### `BellSlotModel`
 ```dart

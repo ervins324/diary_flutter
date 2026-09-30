@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 import '../config/app_config.dart';
 import '../../models/subject_model.dart';
 import '../../models/bell_slot_model.dart';
@@ -306,6 +308,10 @@ class HiveBoxes {
     return _syncQueueBox.length;
   }
 
+  static Future<void> clearSyncQueue() async {
+    await _syncQueueBox.clear();
+  }
+
   static Future<void> clearAllCache() async {
     await _scheduleBox.clear();
     await _homeworkBox.clear();
@@ -313,5 +319,44 @@ class HiveBoxes {
     await _subjectsBox.clear();
     await _bellsBox.clear();
     await _holidaysBox.clear();
+  }
+
+  /// Completely wipes all local data across all 7 operational Hive boxes,
+  /// clears offline sync queue, deletes sync timestamps, and purges staged local attachments.
+  static Future<void> wipeAllLocalData() async {
+    await _scheduleBox.clear();
+    await _homeworkBox.clear();
+    await _notesBox.clear();
+    await _subjectsBox.clear();
+    await _bellsBox.clear();
+    await _holidaysBox.clear();
+    await _syncQueueBox.clear();
+    await _settingsBox.delete('last_sync_timestamp');
+    await deleteStagedLocalFiles();
+  }
+
+  /// Deletes staged local attachment files (hw_*, doc_*, diary_*) from device storage.
+  static Future<int> deleteStagedLocalFiles() async {
+    int deleted = 0;
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      if (await appDir.exists()) {
+        final list = appDir.listSync();
+        for (final file in list) {
+          if (file is File) {
+            final name = file.uri.pathSegments.last;
+            if (name.startsWith('hw_') ||
+                name.startsWith('doc_') ||
+                name.startsWith('diary_')) {
+              try {
+                file.deleteSync();
+                deleted++;
+              } catch (_) {}
+            }
+          }
+        }
+      }
+    } catch (_) {}
+    return deleted;
   }
 }

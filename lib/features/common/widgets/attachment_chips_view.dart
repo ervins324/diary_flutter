@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../core/theme/liquid_theme.dart';
+import '../../../core/utils/file_download_helper.dart';
 import '../../../models/homework_model.dart';
 import 'lightbox_gallery.dart';
 
@@ -28,11 +29,13 @@ class AttachmentChipsView extends StatelessWidget {
   Widget build(BuildContext context) {
     // 1. Collect all images (both direct string URLs and image attachments)
     final allImageUrls = <String>[];
+    final allImageNames = <String>[];
     final imageAttachmentIndices = <int>[];
 
     for (final img in images) {
       if (img.trim().isNotEmpty) {
         allImageUrls.add(img);
+        allImageNames.add('homework_image_${allImageUrls.length}.jpg');
       }
     }
 
@@ -42,6 +45,11 @@ class AttachmentChipsView extends StatelessWidget {
       if (AttachmentHelper.isImageAttachment(att.type, att.name) ||
           AttachmentHelper.isImageAttachment(att.type, att.url)) {
         allImageUrls.add(att.localFilePath ?? att.url);
+        allImageNames.add(
+          att.name.trim().isNotEmpty
+              ? att.name
+              : 'homework_image_${allImageUrls.length}.jpg',
+        );
         imageAttachmentIndices.add(i);
       } else {
         nonImageAttachments.add(MapEntry(i, att));
@@ -76,6 +84,7 @@ class AttachmentChipsView extends StatelessWidget {
                         LightboxGallery.show(
                           context,
                           images: allImageUrls,
+                          imageNames: allImageNames,
                           initialIndex: idx,
                         );
                       },
@@ -184,10 +193,19 @@ class AttachmentChipsView extends StatelessWidget {
 
               return GestureDetector(
                 onTap: () {
-                  AttachmentHelper.openFileOrUrl(
-                    att.url,
-                    localFilePath: att.localFilePath,
-                  );
+                  if (isLink) {
+                    AttachmentHelper.openFileOrUrl(
+                      att.url,
+                      localFilePath: att.localFilePath,
+                    );
+                  } else {
+                    FileDownloadHelper.downloadAndNotify(
+                      context,
+                      rawUrl: att.url,
+                      preferredFileName: att.name,
+                      localFilePath: att.localFilePath,
+                    );
+                  }
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -235,14 +253,42 @@ class AttachmentChipsView extends StatelessWidget {
                           ),
                         ),
                       ],
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.open_in_new_rounded,
-                        size: 12,
-                        color: isDark
-                            ? LiquidTheme.darkTextMuted
-                            : LiquidTheme.lightTextMuted,
-                      ),
+                      if (!isLink) ...[
+                        const SizedBox(width: 4),
+                        GestureDetector(
+                          onTap: () {
+                            FileDownloadHelper.downloadAndNotify(
+                              context,
+                              rawUrl: att.url,
+                              preferredFileName: att.name,
+                              localFilePath: att.localFilePath,
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white12
+                                  : Colors.black.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Icon(
+                              Icons.download_rounded,
+                              size: 13,
+                              color: LiquidTheme.accentLight,
+                            ),
+                          ),
+                        ),
+                      ] else ...[
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.open_in_new_rounded,
+                          size: 12,
+                          color: isDark
+                              ? LiquidTheme.darkTextMuted
+                              : LiquidTheme.lightTextMuted,
+                        ),
+                      ],
                       if (onRemoveAttachment != null) ...[
                         const SizedBox(width: 4),
                         GestureDetector(

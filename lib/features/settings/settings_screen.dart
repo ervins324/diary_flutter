@@ -7,7 +7,12 @@ import '../../core/sync/auto_sync_service.dart';
 import '../../core/theme/liquid_theme.dart';
 import '../../providers/alerts_provider.dart';
 import '../../providers/api_client_provider.dart';
+import '../../providers/bells_provider.dart';
+import '../../providers/homework_provider.dart';
+import '../../providers/notes_provider.dart';
+import '../../providers/schedule_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../providers/subjects_provider.dart';
 import '../bells/bells_sheet.dart';
 import '../common/widgets/liquid_sliding_switcher.dart';
 import '../server_setup/server_setup_screen.dart';
@@ -838,26 +843,104 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Clear cache
-          Center(
-            child: TextButton.icon(
-              onPressed: () async {
-                await HiveBoxes.clearAllCache();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Local cache cleared')),
-                  );
-                }
-              },
-              icon: const Icon(
-                Icons.cleaning_services_rounded,
-                size: 16,
-                color: LiquidTheme.danger,
-              ),
-              label: const Text(
-                'Clear Local Cache',
-                style: TextStyle(color: LiquidTheme.danger),
-              ),
+          // ── Data & Local Storage Management ──────────────────
+          _buildSettingsCard(
+            isDark: isDark,
+            isPerfMode: performanceMode,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: LiquidTheme.danger.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.delete_forever_rounded,
+                        size: 20,
+                        color: LiquidTheme.danger,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            loc.translate('wipe_all_data'),
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            loc.translate('wipe_all_data_desc'),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? LiquidTheme.darkTextSecondary
+                                  : LiquidTheme.lightTextSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () =>
+                        _confirmWipeAllData(context, ref, loc, isDark),
+                    icon: const Icon(Icons.delete_sweep_rounded, size: 18),
+                    label: Text(loc.translate('wipe_all_btn')),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: LiquidTheme.danger,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () async {
+                      await HiveBoxes.clearAllCache();
+                      ref.invalidate(scheduleProvider);
+                      ref.invalidate(homeworkListProvider);
+                      ref.invalidate(notesListProvider);
+                      ref.invalidate(subjectsProvider);
+                      ref.invalidate(bellsProvider);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Local cache cleared')),
+                        );
+                      }
+                    },
+                    icon: const Icon(
+                      Icons.cleaning_services_rounded,
+                      size: 15,
+                      color: LiquidTheme.warning,
+                    ),
+                    label: const Text(
+                      'Clear Cache Only',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: LiquidTheme.warning,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -865,6 +948,106 @@ class SettingsScreen extends ConsumerWidget {
     );
 
     return performanceMode ? scrollView : LiquidGlassBatch(child: scrollView);
+  }
+
+  Future<void> _confirmWipeAllData(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations loc,
+    bool isDark,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: LiquidTheme.danger,
+              size: 28,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                loc.translate('wipe_all_confirm_title'),
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          loc.translate('wipe_all_confirm_desc'),
+          style: TextStyle(
+            fontSize: 13,
+            height: 1.4,
+            color: isDark ? Colors.white70 : Colors.black87,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(loc.translate('cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: LiquidTheme.danger,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(loc.translate('wipe_all_btn')),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      await HiveBoxes.wipeAllLocalData();
+      await ref.read(syncQueueProvider).clearQueue();
+
+      // Invalidate all active data providers to refresh UI with clean empty state
+      ref.invalidate(scheduleProvider);
+      ref.invalidate(homeworkListProvider);
+      ref.invalidate(notesListProvider);
+      ref.invalidate(subjectsProvider);
+      ref.invalidate(bellsProvider);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: LiquidTheme.danger,
+            duration: const Duration(seconds: 4),
+            content: Row(
+              children: [
+                const Icon(
+                  Icons.delete_sweep_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    loc.translate('wipe_all_success'),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildSettingsCard({

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/database/hive_boxes.dart';
 import '../../../core/theme/liquid_theme.dart';
+import '../../../core/utils/file_download_helper.dart';
 
 /// Helper to resolve any file or image URL to a full network URI, local file path, or base64.
 class AttachmentHelper {
@@ -89,17 +90,20 @@ class AttachmentHelper {
 /// double-tap zoom, swipe navigation, zoom scale controls, and counter.
 class LightboxGallery extends StatefulWidget {
   final List<String> images;
+  final List<String>? imageNames;
   final int initialIndex;
 
   const LightboxGallery({
     super.key,
     required this.images,
+    this.imageNames,
     this.initialIndex = 0,
   });
 
   static void show(
     BuildContext context, {
     required List<String> images,
+    List<String>? imageNames,
     int initialIndex = 0,
   }) {
     if (images.isEmpty) return;
@@ -110,7 +114,11 @@ class LightboxGallery extends StatefulWidget {
         pageBuilder: (context, anim, _) {
           return FadeTransition(
             opacity: anim,
-            child: LightboxGallery(images: images, initialIndex: initialIndex),
+            child: LightboxGallery(
+              images: images,
+              imageNames: imageNames,
+              initialIndex: initialIndex,
+            ),
           );
         },
       ),
@@ -365,6 +373,41 @@ class _LightboxGalleryState extends State<LightboxGallery>
                         ),
                       );
                     },
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Download button
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: IconButton(
+                      onPressed: () {
+                        final preferredName =
+                            widget.imageNames != null &&
+                                widget.imageNames!.length > _currentIndex
+                            ? widget.imageNames![_currentIndex]
+                            : null;
+                        FileDownloadHelper.downloadAndNotify(
+                          context,
+                          rawUrl: currentUrl,
+                          preferredFileName: preferredName,
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.download_rounded,
+                        size: 19,
+                        color: Colors.white,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 36,
+                        minHeight: 36,
+                      ),
+                      padding: EdgeInsets.zero,
+                      tooltip: 'Download image',
+                    ),
                   ),
                   const SizedBox(width: 8),
 

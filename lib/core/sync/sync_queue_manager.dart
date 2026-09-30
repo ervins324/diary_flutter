@@ -201,8 +201,29 @@ class SyncQueueManager extends ChangeNotifier {
     }
   }
 
+  /// Clears the persistent sync queue and updates in-memory pending state.
+  Future<void> clearQueue() async {
+    await HiveBoxes.clearSyncQueue();
+    _state = _state.copyWith(
+      pendingCount: 0,
+      lastError: null,
+      isSyncing: false,
+    );
+    notifyListeners();
+  }
+
+  bool _isDisposed = false;
+
+  @override
+  void notifyListeners() {
+    if (!_isDisposed) {
+      super.notifyListeners();
+    }
+  }
+
   @override
   void dispose() {
+    _isDisposed = true;
     _connectivitySub.cancel();
     super.dispose();
   }

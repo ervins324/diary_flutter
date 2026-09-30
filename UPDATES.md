@@ -1,5 +1,36 @@
 # Updates Log
 
+## [1.0.11] - 2026-09-30
+### Added & Enhanced
+- **Reliable File & Homework Image Downloading (`FileDownloadHelper`)**:
+  - **Complete Image & File Downloading**: Fixed issue where tapping download on homework attachments and images failed. Built a robust `FileDownloadHelper` that decodes Base64 data URLs, streams server endpoints (`/api/v1/files/{file_id}?download=true`) via Dio with Content-Disposition parsing, and handles local staged files.
+  - **Downloads Directory Storage**: Automatically targets public device Downloads storage (`/storage/emulated/0/Download` on Android, with automatic fallback to app documents/external storage) and avoids overwriting existing files via duplicate counter suffixes (`file (1).ext`).
+  - **Interactive Lightbox Download Action**: Added a prominent download button (`Icons.download_rounded`) with animated status and SnackBar notifications ("Saved to Downloads: [filename]" with "Open" action) in `LightboxGallery`.
+  - **Attachment Chips View Download Buttons**: Added direct 1-tap download buttons on document attachment chips (PDF, presentation, DOCX, links) and preserved original attachment file names when opening and saving images from `AttachmentChipsView`.
+- **Wipe All Local Data (`HiveBoxes.wipeAllLocalData`)**:
+  - **Total Local Storage Deletion**: Added a comprehensive purge command that empties all 7 operational Hive boxes (`diary_bells`, `diary_schedule`, `diary_homework`, `diary_notes`, `diary_subjects`, `diary_holidays`, `diary_sync_queue`), clears `last_sync_timestamp`, and deletes all staged attachment files on disk (`hw_*`, `doc_*`, `diary_*`).
+  - **Confirmation Warning Modal**: Integrated a red warning confirmation dialog in `SettingsScreen` preventing accidental deletions, detailing all affected data.
+  - **Cascading Riverpod State Reset**: Immediately resets all active in-memory Riverpod providers (`scheduleProvider`, `homeworkListProvider`, `notesListProvider`, `subjectsProvider`, `bellsProvider`, `syncQueueProvider`) so the UI refreshes to an empty state with zero stale entities.
+  - **Bilingual Localization**: Added full Ukrainian and English translations for download notifications and local data deletion flows.
+
+## [1.0.10] - 2026-09-30
+### Added & Enhanced
+- **Schedule Overrides & Academic Event Management**:
+  - **Lesson Override Bottom Sheet (`LessonOverrideSheet`)**: Built an interactive modal sheet allowing students to substitute subjects, change classrooms, tag academic events, toggle cancellations, and record temporal notes without altering master timetable rules.
+  - **Academic Event Tagging**: Added selectable event pills matching the full-stack web app: Regular Lesson (🎓), Control Work (🔥 `#F43F5E`), Test / Quiz (📝 `#F59E0B`), Essay / Paper (✍️ `#A855F7`), Project (🚀 `#0EA5E9`), and Consultation (💬 `#6366F1`).
+  - **1-Click Quick Actions**:
+    - **Air Raid Alert Cancellation**: 1-click toggle to mark a lesson cancelled with automatic note assignment (`Повітряна тривога` / `Air raid alert`).
+    - **Consultation Quick Skip**: 1-click toggle for optional consultations to mark as skipped (`Пропущено консультацію` / `Skipped consultation`).
+  - **Full Offline Sync Queue Support**: Mutations enqueue optimistic `SyncAction` items (`POST /api/v1/schedule/override` and `DELETE /api/v1/schedule/override`) to ensure seamless offline resilience and background delivery to the FastAPI backend.
+  - **Reset to Regular Schedule**: Added a restore action with confirmation modal to revert temporal overrides back to recurring timetable rules via `DELETE /api/v1/schedule/override`.
+- **Fast Navigation Between Adjacent Lessons**:
+  - **Direct Lesson Stepper**: Added quick navigation action buttons on `LessonSlotCard` and in `LessonDetailSheet` to jump immediately to the preceding or upcoming lesson for that subject via `/schedule/previous-lesson` and `/schedule/next-lesson`.
+  - **Cross-Week Calendar Hopping**: Automatically calculates Monday-based week offsets, switches `selectedDateProvider`, loads the destination week schedule, and presents the target lesson's details sheet in a single seamless tap.
+  - **Offline Fallback Finder**: When network is unavailable or backend is unreachable, searches local Hive schedule cache across stored days to locate the closest adjacent lesson.
+- **Enhanced Lesson Cards & Detail Sheets**:
+  - **Visual Badges**: Added badges on `LessonSlotCard` and `LessonDetailSheet` for academic event types, consultation status, cancellation strikethrough, and substitution indicators (`Substituted from: [Original Subject]`).
+  - **Bilingual Localization**: Added complete Ukrainian (`uk`) and English (`en`) strings for override modals, quick cancellation actions, event names, and navigation prompts in `AppLocalizations`.
+
 ## [1.0.9] - 2026-09-30
 ### Added & Optimized
 - **Liquid Glass Sliding Switchers (Smooth Physical Translation)**:

@@ -113,6 +113,40 @@ class LessonSlot {
       'is_consultation': isConsultation,
     };
   }
+
+  LessonSlot copyWith({
+    String? date,
+    int? lessonOrder,
+    SubjectModel? subject,
+    String? startTime,
+    String? endTime,
+    String? cabinet,
+    List<HomeworkItem>? homework,
+    List<LessonNoteModel>? notes,
+    SubjectModel? originalSubject,
+    bool? isOverride,
+    bool? isCancelled,
+    String? overrideNote,
+    String? eventType,
+    bool? isConsultation,
+  }) {
+    return LessonSlot(
+      date: date ?? this.date,
+      lessonOrder: lessonOrder ?? this.lessonOrder,
+      subject: subject ?? this.subject,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      cabinet: cabinet ?? this.cabinet,
+      homework: homework ?? this.homework,
+      notes: notes ?? this.notes,
+      originalSubject: originalSubject ?? this.originalSubject,
+      isOverride: isOverride ?? this.isOverride,
+      isCancelled: isCancelled ?? this.isCancelled,
+      overrideNote: overrideNote ?? this.overrideNote,
+      eventType: eventType ?? this.eventType,
+      isConsultation: isConsultation ?? this.isConsultation,
+    );
+  }
 }
 
 /// Day schedule containing date, week type, and lessons.
@@ -160,6 +194,69 @@ class DaySchedule {
       'lessons': lessons.map((l) => l.toJson()).toList(),
       'is_holiday': isHoliday,
       'holiday_name': holidayName,
+    };
+  }
+
+  DaySchedule copyWith({
+    String? date,
+    String? dayName,
+    String? weekType,
+    List<LessonSlot>? lessons,
+    bool? isHoliday,
+    String? holidayName,
+  }) {
+    return DaySchedule(
+      date: date ?? this.date,
+      dayName: dayName ?? this.dayName,
+      weekType: weekType ?? this.weekType,
+      lessons: lessons ?? this.lessons,
+      isHoliday: isHoliday ?? this.isHoliday,
+      holidayName: holidayName ?? this.holidayName,
+    );
+  }
+}
+
+/// Result returned when searching for the adjacent next or previous lesson of a subject.
+class AdjacentLessonResult {
+  final String date;
+  final int lessonOrder;
+  final String subjectId;
+  final String subjectName;
+  final String startTime;
+  final String endTime;
+  final String? cabinet;
+
+  const AdjacentLessonResult({
+    required this.date,
+    required this.lessonOrder,
+    required this.subjectId,
+    required this.subjectName,
+    required this.startTime,
+    required this.endTime,
+    this.cabinet,
+  });
+
+  factory AdjacentLessonResult.fromJson(Map<String, dynamic> json) {
+    return AdjacentLessonResult(
+      date: json['date']?.toString() ?? '',
+      lessonOrder: (json['lesson_order'] as num?)?.toInt() ?? 1,
+      subjectId: json['subject_id']?.toString() ?? '',
+      subjectName: json['subject_name']?.toString() ?? '',
+      startTime: LessonSlot.formatTime(json['start_time']?.toString() ?? ''),
+      endTime: LessonSlot.formatTime(json['end_time']?.toString() ?? ''),
+      cabinet: json['cabinet'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'date': date,
+      'lesson_order': lessonOrder,
+      'subject_id': subjectId,
+      'subject_name': subjectName,
+      'start_time': startTime,
+      'end_time': endTime,
+      'cabinet': cabinet,
     };
   }
 }

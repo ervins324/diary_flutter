@@ -314,6 +314,72 @@ class ApiClient {
     return [];
   }
 
+  Future<Map<String, dynamic>> setScheduleOverride(
+    Map<String, dynamic> data,
+  ) async {
+    final response = await _dio.post(
+      '${AppConfig.apiPrefix}/schedule/override',
+      data: data,
+    );
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<void> deleteScheduleOverride(
+    String targetDate,
+    int lessonOrder,
+  ) async {
+    await _dio.delete(
+      '${AppConfig.apiPrefix}/schedule/override',
+      queryParameters: {'target_date': targetDate, 'lesson_order': lessonOrder},
+    );
+  }
+
+  Future<AdjacentLessonResult?> getNextLesson(
+    String subjectId, {
+    String? currentDate,
+    int? currentLessonOrder,
+  }) async {
+    final params = <String, dynamic>{'subject_id': subjectId};
+    if (currentDate != null) params['current_date'] = currentDate;
+    if (currentLessonOrder != null) {
+      params['current_lesson_order'] = currentLessonOrder;
+    }
+
+    final response = await _dio.get(
+      '${AppConfig.apiPrefix}/schedule/next-lesson',
+      queryParameters: params,
+    );
+    if (response.data != null && response.data is Map) {
+      return AdjacentLessonResult.fromJson(
+        Map<String, dynamic>.from(response.data as Map),
+      );
+    }
+    return null;
+  }
+
+  Future<AdjacentLessonResult?> getPreviousLesson(
+    String subjectId, {
+    String? currentDate,
+    int? currentLessonOrder,
+  }) async {
+    final params = <String, dynamic>{'subject_id': subjectId};
+    if (currentDate != null) params['current_date'] = currentDate;
+    if (currentLessonOrder != null) {
+      params['current_lesson_order'] = currentLessonOrder;
+    }
+
+    final response = await _dio.get(
+      '${AppConfig.apiPrefix}/schedule/previous-lesson',
+      queryParameters: params,
+    );
+    if (response.data != null && response.data is Map) {
+      return AdjacentLessonResult.fromJson(
+        Map<String, dynamic>.from(response.data as Map),
+      );
+    }
+    return null;
+  }
+
   // ── Homework ──────────────────────────────────────────────────
   Future<List<HomeworkItem>> getHomeworkList({
     String? status,

@@ -41,6 +41,34 @@ class AppLocalizations {
       'test': 'Самостійна робота',
       'essay': 'Твір / Есе',
       'project': 'Проєкт',
+      'change_lesson': 'Зміна уроку на дату',
+      'academic_event': 'Академічна подія',
+      'event_none': 'Звичайний урок',
+      'cancel_lesson': 'Скасувати цей урок (вікно / немає уроку)',
+      'cancel_lesson_desc':
+          'У щоденнику відображатиметься як скасований із закресленням',
+      'air_alert_cancel': 'Повітряна тривога (скасувати)',
+      'air_alert_cancel_desc':
+          'Швидко позначити цей урок скасованим через тривогу',
+      'consultation_skip': 'Консультація (пропустити)',
+      'consultation_skip_desc':
+          'Консультація необовʼязкова. 1 клік — позначити пропущеною',
+      'substitute_subject': 'Урок на заміну (новий предмет)',
+      'substitute_subject_desc': 'Оберіть інший предмет для заміни',
+      'select_subject': 'Оберіть предмет',
+      'search_subject': 'Пошук предмета...',
+      'override_note': 'Примітка / Причина (необовʼязково)',
+      'override_note_hint': 'Наприклад, Заміна викладача або тема тесту',
+      'reset_to_regular': 'Повернути регулярний розклад',
+      'reset_confirm': 'Повернути регулярний розклад для цього уроку?',
+      'next_lesson': 'Наступний урок',
+      'previous_lesson': 'Попередній урок',
+      'no_next_lesson': 'Не знайдено наступного уроку для цього предмета.',
+      'no_prev_lesson': 'Не знайдено попереднього уроку для цього предмета.',
+      'finding_lesson': 'Пошук уроку...',
+      'lesson_override_saved': 'Зміни успішно збережено',
+      'lesson_override_deleted': 'Регулярний розклад відновлено',
+      'diary_preview': 'Відображення у щоденнику:',
 
       // Days of week
       'mon': 'Пн',
@@ -217,6 +245,22 @@ class AppLocalizations {
       'performance_mode': 'Плавне гортання (FPS)',
       'performance_mode_desc':
           'Оптимізація графіки без затримок для 60/120 FPS',
+
+      // File Downloading & Storage
+      'download_file': 'Завантажити файл',
+      'download_image': 'Завантажити фото',
+      'file_downloading': 'Завантаження файлу...',
+      'file_saved_to_downloads': 'Файл збережено в Завантаження',
+      'file_download_error': 'Помилка завантаження файлу',
+      'open_file': 'Відкрити',
+      'wipe_all_data': 'Видалити всі локальні дані',
+      'wipe_all_data_desc':
+          'Очистити всі кешовані уроки, Д/З, нотатки, предмети, дзвінки та завантажені файли з пристрою',
+      'wipe_all_confirm_title': 'Видалити всі дані з пристрою?',
+      'wipe_all_confirm_desc':
+          'Це повністю видалить усі збережені розклади, домашні завдання, нотатки, предмети, дзвінки, чергу офлайн-синхронізації та вкладення на цьому телефоні. Дія незворотна!',
+      'wipe_all_success': 'Усі локальні дані успішно видалено',
+      'wipe_all_btn': 'Видалити все',
     },
     'en': {
       // Navigation
@@ -247,6 +291,34 @@ class AppLocalizations {
       'test': 'Test',
       'essay': 'Essay',
       'project': 'Project',
+      'change_lesson': 'Change Lesson for Date',
+      'academic_event': 'Academic Event',
+      'event_none': 'Regular Lesson',
+      'cancel_lesson': 'Cancel lesson (no class today)',
+      'cancel_lesson_desc':
+          'Displays in diary with strikethrough indicating no lesson',
+      'air_alert_cancel': 'Air Alert (Cancel Lesson)',
+      'air_alert_cancel_desc':
+          '1-click mark lesson as cancelled due to air raid alert',
+      'consultation_skip': 'Consultation (Skip Class)',
+      'consultation_skip_desc':
+          'Consultations are optional. 1-click mark as skipped',
+      'substitute_subject': 'Substitute Subject (New Class)',
+      'substitute_subject_desc': 'Select another subject for substitution',
+      'select_subject': 'Select Subject',
+      'search_subject': 'Search subjects...',
+      'override_note': 'Note / Reason (optional)',
+      'override_note_hint': 'e.g. Teacher substitution or test topic',
+      'reset_to_regular': 'Reset to Regular Schedule',
+      'reset_confirm': 'Reset this lesson to the regular recurring schedule?',
+      'next_lesson': 'Next Lesson',
+      'previous_lesson': 'Previous Lesson',
+      'no_next_lesson': 'No upcoming lesson found for this subject.',
+      'no_prev_lesson': 'No previous lesson found for this subject.',
+      'finding_lesson': 'Locating lesson...',
+      'lesson_override_saved': 'Changes saved successfully',
+      'lesson_override_deleted': 'Regular schedule restored',
+      'diary_preview': 'Appearance in diary:',
 
       // Days of week
       'mon': 'Mon',
@@ -422,6 +494,22 @@ class AppLocalizations {
       'performance_mode': 'Smooth Scrolling (FPS)',
       'performance_mode_desc':
           'Optimized rendering for responsive 60/120 FPS scrolling',
+
+      // File Downloading & Storage
+      'download_file': 'Download file',
+      'download_image': 'Download image',
+      'file_downloading': 'Downloading file...',
+      'file_saved_to_downloads': 'File saved to Downloads',
+      'file_download_error': 'Failed to download file',
+      'open_file': 'Open',
+      'wipe_all_data': 'Delete Entirely All Local Data',
+      'wipe_all_data_desc':
+          'Permanently delete all cached schedules, homework, notes, subjects, bells, and staged files from this device',
+      'wipe_all_confirm_title': 'Delete ALL Local Data?',
+      'wipe_all_confirm_desc':
+          'This will permanently wipe all cached lessons, homework, notes, bells, subjects, staged local files, and offline sync queue on this device. This action cannot be undone!',
+      'wipe_all_success': 'All local data has been completely deleted',
+      'wipe_all_btn': 'Delete Everything',
     },
   };
 
