@@ -7,6 +7,7 @@ import '../../core/theme/liquid_theme.dart';
 import '../../providers/schedule_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/stats_provider.dart';
+import '../common/widgets/liquid_sliding_switcher.dart';
 import '../schedule/widgets/lesson_slot_card.dart';
 
 /// Full feature parity weekly statistics dashboard matching StatsPage.tsx.
@@ -90,52 +91,28 @@ class StatsScreen extends ConsumerWidget {
               horizontal: 16.0,
               vertical: 4.0,
             ),
-            child: _buildGlassCard(
+            child: LiquidSlidingSwitcher<String>(
+              height: 42,
+              borderRadius: 14,
               isDark: isDark,
               isPerfMode: isPerfMode,
-              radius: 14,
-              style: LiquidTheme.pillStyle(isDark: isDark, radius: 14),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: isPerfMode
-                      ? (isDark
-                            ? const Color(0x381E293B)
-                            : const Color(0xB3FFFFFF))
-                      : null,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isDark
-                        ? LiquidTheme.darkBorder
-                        : LiquidTheme.lightBorder,
-                  ),
+              selectedValue: scheduleMode,
+              onSelectionChanged: (val) =>
+                  ref.read(statsScheduleModeProvider.notifier).state = val,
+              segments: [
+                LiquidSegment(
+                  value: 'actual',
+                  label: loc.translate('stats_mode_actual'),
                 ),
-                child: Row(
-                  children: [
-                    _buildPillButton(
-                      label: loc.translate('stats_mode_actual'),
-                      isSelected: scheduleMode == 'actual',
-                      onTap: () =>
-                          ref.read(statsScheduleModeProvider.notifier).state =
-                              'actual',
-                    ),
-                    _buildPillButton(
-                      label: loc.translate('stats_mode_numerator'),
-                      isSelected: scheduleMode == 'numerator',
-                      onTap: () =>
-                          ref.read(statsScheduleModeProvider.notifier).state =
-                              'numerator',
-                    ),
-                    _buildPillButton(
-                      label: loc.translate('stats_mode_denominator'),
-                      isSelected: scheduleMode == 'denominator',
-                      onTap: () =>
-                          ref.read(statsScheduleModeProvider.notifier).state =
-                              'denominator',
-                    ),
-                  ],
+                LiquidSegment(
+                  value: 'numerator',
+                  label: loc.translate('stats_mode_numerator'),
                 ),
-              ),
+                LiquidSegment(
+                  value: 'denominator',
+                  label: loc.translate('stats_mode_denominator'),
+                ),
+              ],
             ),
           ),
         ),
@@ -149,51 +126,26 @@ class StatsScreen extends ConsumerWidget {
                 // Metric Switcher: Time vs Lessons
                 Expanded(
                   flex: 4,
-                  child: _buildGlassCard(
+                  child: LiquidSlidingSwitcher<String>(
+                    height: 38,
+                    borderRadius: 12,
                     isDark: isDark,
                     isPerfMode: isPerfMode,
-                    radius: 12,
-                    style: LiquidTheme.pillStyle(isDark: isDark, radius: 12),
-                    child: Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                        color: isPerfMode
-                            ? (isDark
-                                  ? const Color(0x381E293B)
-                                  : const Color(0xB3FFFFFF))
-                            : null,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark
-                              ? LiquidTheme.darkBorder
-                              : LiquidTheme.lightBorder,
-                        ),
+                    selectedValue: metricMode,
+                    onSelectionChanged: (val) =>
+                        ref.read(statsMetricModeProvider.notifier).state = val,
+                    segments: [
+                      LiquidSegment(
+                        value: 'time',
+                        label: loc.translate('stats_metric_time'),
+                        icon: Icons.access_time_rounded,
                       ),
-                      child: Row(
-                        children: [
-                          _buildPillButton(
-                            icon: Icons.access_time_rounded,
-                            label: loc.translate('stats_metric_time'),
-                            isSelected: metricMode == 'time',
-                            onTap: () =>
-                                ref
-                                        .read(statsMetricModeProvider.notifier)
-                                        .state =
-                                    'time',
-                          ),
-                          _buildPillButton(
-                            icon: Icons.tag_rounded,
-                            label: loc.translate('stats_metric_lessons'),
-                            isSelected: metricMode == 'lessons',
-                            onTap: () =>
-                                ref
-                                        .read(statsMetricModeProvider.notifier)
-                                        .state =
-                                    'lessons',
-                          ),
-                        ],
+                      LiquidSegment(
+                        value: 'lessons',
+                        label: loc.translate('stats_metric_lessons'),
+                        icon: Icons.tag_rounded,
                       ),
-                    ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -201,47 +153,26 @@ class StatsScreen extends ConsumerWidget {
                 // View Switcher: Subjects vs Days
                 Expanded(
                   flex: 5,
-                  child: _buildGlassCard(
+                  child: LiquidSlidingSwitcher<String>(
+                    height: 38,
+                    borderRadius: 12,
                     isDark: isDark,
                     isPerfMode: isPerfMode,
-                    radius: 12,
-                    style: LiquidTheme.pillStyle(isDark: isDark, radius: 12),
-                    child: Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                        color: isPerfMode
-                            ? (isDark
-                                  ? const Color(0x381E293B)
-                                  : const Color(0xB3FFFFFF))
-                            : null,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark
-                              ? LiquidTheme.darkBorder
-                              : LiquidTheme.lightBorder,
-                        ),
+                    selectedValue: viewMode,
+                    onSelectionChanged: (val) =>
+                        ref.read(statsViewModeProvider.notifier).state = val,
+                    segments: [
+                      LiquidSegment(
+                        value: 'subjects',
+                        label: loc.translate('by_subjects'),
+                        icon: Icons.bar_chart_rounded,
                       ),
-                      child: Row(
-                        children: [
-                          _buildPillButton(
-                            icon: Icons.bar_chart_rounded,
-                            label: loc.translate('by_subjects'),
-                            isSelected: viewMode == 'subjects',
-                            onTap: () =>
-                                ref.read(statsViewModeProvider.notifier).state =
-                                    'subjects',
-                          ),
-                          _buildPillButton(
-                            icon: Icons.calendar_view_day_rounded,
-                            label: loc.translate('by_days'),
-                            isSelected: viewMode == 'days',
-                            onTap: () =>
-                                ref.read(statsViewModeProvider.notifier).state =
-                                    'days',
-                          ),
-                        ],
+                      LiquidSegment(
+                        value: 'days',
+                        label: loc.translate('by_days'),
+                        icon: Icons.calendar_view_day_rounded,
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ],
@@ -287,60 +218,6 @@ class StatsScreen extends ConsumerWidget {
       },
       color: LiquidTheme.accent,
       child: wrappedBatch,
-    );
-  }
-
-  Widget _buildPillButton({
-    IconData? icon,
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: isSelected ? LiquidTheme.accent : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (icon != null) ...[
-                Icon(
-                  icon,
-                  size: 11,
-                  color: isSelected ? Colors.white : Colors.white70,
-                ),
-                const SizedBox(width: 2),
-              ],
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.center,
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    softWrap: false,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.w500,
-                      color: isSelected ? Colors.white : Colors.white70,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 

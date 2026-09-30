@@ -89,26 +89,53 @@ class AirRaidAlertNotifier extends StateNotifier<AirRaidAlertState> {
 
   void _connectWebSocket() {
     try {
-      final uri = Uri.parse(AppConfig.neptunWsUrl);
-      _channel = WebSocketChannel.connect(uri);
+      // Safely close any existing channel before opening a new one
+      try {
+        _channel?.sink.close();
+      } catch (_) {}
 
-      _channel?.stream.listen(
+      final uri = Uri.parse(AppConfig.neptunWsUrl);
+      final channel = WebSocketChannel.connect(uri);
+      _channel = channel;
+
+      // Ensure ready future errors (e.g. SocketException / DNS lookup failure) are handled
+      // to prevent unhandled exceptions escaping into the Dart VM root zone.
+      channel.ready
+          .then((_) {
+            if (mounted) {
+              state = state.copyWith(isConnected: true);
+            }
+          })
+          .catchError((_) {
+            if (mounted) {
+              state = state.copyWith(isConnected: false);
+              _reconnectWsDelayed();
+            }
+          });
+
+      channel.stream.listen(
         (data) {
           _processAlertData(data);
         },
         onError: (_) {
-          state = state.copyWith(isConnected: false);
-          _reconnectWsDelayed();
+          if (mounted) {
+            state = state.copyWith(isConnected: false);
+            _reconnectWsDelayed();
+          }
         },
         onDone: () {
-          state = state.copyWith(isConnected: false);
-          _reconnectWsDelayed();
+          if (mounted) {
+            state = state.copyWith(isConnected: false);
+            _reconnectWsDelayed();
+          }
         },
+        cancelOnError: true,
       );
-      state = state.copyWith(isConnected: true);
     } catch (_) {
-      state = state.copyWith(isConnected: false);
-      _reconnectWsDelayed();
+      if (mounted) {
+        state = state.copyWith(isConnected: false);
+        _reconnectWsDelayed();
+      }
     }
   }
 

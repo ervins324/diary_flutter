@@ -7,7 +7,6 @@ import '../../core/theme/liquid_theme.dart';
 import '../../providers/api_client_provider.dart';
 import '../../core/sync/auto_sync_service.dart';
 import '../alerts/widgets/air_raid_banner.dart';
-import '../common/widgets/lazy_indexed_stack.dart';
 import '../homework/homework_screen.dart';
 import '../notes/notes_screen.dart';
 import '../schedule/schedule_screen.dart';
@@ -15,25 +14,58 @@ import '../settings/settings_screen.dart';
 import '../stats/stats_screen.dart';
 import '../../providers/settings_provider.dart';
 
+import '../common/widgets/keep_alive_wrapper.dart';
+
 final selectedTabIndexProvider = StateProvider<int>((ref) => 0);
 
-/// Main application layout featuring LiquidGlass refraction, ambient mesh background, and glass navigation bar.
-class MainScaffold extends ConsumerWidget {
+/// Main application layout featuring LiquidGlass refraction, ambient mesh background,
+/// smooth translating PageView transitions, and a sliding liquid glass navigation bar.
+class MainScaffold extends ConsumerStatefulWidget {
   const MainScaffold({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MainScaffold> createState() => _MainScaffoldState();
+}
+
+class _MainScaffoldState extends ConsumerState<MainScaffold> {
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialIndex = ref.read(selectedTabIndexProvider);
+    _pageController = PageController(initialPage: initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<int>(selectedTabIndexProvider, (previous, next) {
+      if (_pageController.hasClients && _pageController.page?.round() != next) {
+        _pageController.animateToPage(
+          next,
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    });
+
     final currentIndex = ref.watch(selectedTabIndexProvider);
     final isPerfMode = ref.watch(performanceModeProvider);
     final loc = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final pages = const [
-      ScheduleScreen(),
-      HomeworkScreen(),
-      NotesScreen(),
-      StatsScreen(),
-      SettingsScreen(),
+      KeepAliveWrapper(child: ScheduleScreen()),
+      KeepAliveWrapper(child: HomeworkScreen()),
+      KeepAliveWrapper(child: NotesScreen()),
+      KeepAliveWrapper(child: StatsScreen()),
+      KeepAliveWrapper(child: SettingsScreen()),
     ];
 
     final bodyContent = SafeArea(
@@ -68,9 +100,13 @@ class MainScaffold extends ConsumerWidget {
           // Air Raid Alert Banner
           const AirRaidBanner(),
 
-          // Active tab screen (Lazy loading so only visited tabs are mounted)
+          // Active tab screen with smooth translation
           Expanded(
-            child: LazyIndexedStack(index: currentIndex, children: pages),
+            child: PageView(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              children: pages,
+            ),
           ),
         ],
       ),
@@ -230,7 +266,7 @@ class _BottomGlassNavBar extends ConsumerWidget {
 
     final navContent = Container(
       height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
       decoration: BoxDecoration(
         color: isPerfMode
             ? (isDark ? const Color(0xE60F172A) : const Color(0xEBFFFFFF))
@@ -249,59 +285,117 @@ class _BottomGlassNavBar extends ConsumerWidget {
               ]
             : null,
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildNavItem(
-              ref: ref,
-              index: 0,
-              icon: Icons.calendar_today_rounded,
-              label: loc.translate('nav_schedule'),
-              isSelected: currentIndex == 0,
-              isDark: isDark,
-            ),
-          ),
-          Expanded(
-            child: _buildNavItem(
-              ref: ref,
-              index: 1,
-              icon: Icons.assignment_rounded,
-              label: loc.translate('nav_homework'),
-              isSelected: currentIndex == 1,
-              isDark: isDark,
-            ),
-          ),
-          Expanded(
-            child: _buildNavItem(
-              ref: ref,
-              index: 2,
-              icon: Icons.edit_note_rounded,
-              label: loc.translate('nav_notes'),
-              isSelected: currentIndex == 2,
-              isDark: isDark,
-            ),
-          ),
-          Expanded(
-            child: _buildNavItem(
-              ref: ref,
-              index: 3,
-              icon: Icons.bar_chart_rounded,
-              label: loc.translate('nav_stats'),
-              isSelected: currentIndex == 3,
-              isDark: isDark,
-            ),
-          ),
-          Expanded(
-            child: _buildNavItem(
-              ref: ref,
-              index: 4,
-              icon: Icons.settings_rounded,
-              label: loc.translate('nav_settings'),
-              isSelected: currentIndex == 4,
-              isDark: isDark,
-            ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final itemWidth = constraints.maxWidth / 5;
+
+          return Stack(
+            children: [
+              // Smooth sliding liquid glass indicator capsule
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeOutCubic,
+                left: currentIndex * itemWidth,
+                top: 0,
+                bottom: 0,
+                width: itemWidth,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 3,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: isDark
+                          ? [
+                              LiquidTheme.accent.withValues(alpha: 0.38),
+                              Colors.purpleAccent.withValues(alpha: 0.24),
+                            ]
+                          : [
+                              LiquidTheme.accent.withValues(alpha: 0.24),
+                              Colors.purpleAccent.withValues(alpha: 0.15),
+                            ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark
+                          ? LiquidTheme.accentLight.withValues(alpha: 0.5)
+                          : LiquidTheme.accent.withValues(alpha: 0.4),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: LiquidTheme.accent.withValues(
+                          alpha: isDark ? 0.3 : 0.15,
+                        ),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Navigation tab items
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildNavItem(
+                      ref: ref,
+                      index: 0,
+                      icon: Icons.calendar_today_rounded,
+                      label: loc.translate('nav_schedule'),
+                      isSelected: currentIndex == 0,
+                      isDark: isDark,
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildNavItem(
+                      ref: ref,
+                      index: 1,
+                      icon: Icons.assignment_rounded,
+                      label: loc.translate('nav_homework'),
+                      isSelected: currentIndex == 1,
+                      isDark: isDark,
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildNavItem(
+                      ref: ref,
+                      index: 2,
+                      icon: Icons.edit_note_rounded,
+                      label: loc.translate('nav_notes'),
+                      isSelected: currentIndex == 2,
+                      isDark: isDark,
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildNavItem(
+                      ref: ref,
+                      index: 3,
+                      icon: Icons.bar_chart_rounded,
+                      label: loc.translate('nav_stats'),
+                      isSelected: currentIndex == 3,
+                      isDark: isDark,
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildNavItem(
+                      ref: ref,
+                      index: 4,
+                      icon: Icons.settings_rounded,
+                      label: loc.translate('nav_settings'),
+                      isSelected: currentIndex == 4,
+                      isDark: isDark,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
       ),
     );
 
@@ -333,43 +427,40 @@ class _BottomGlassNavBar extends ConsumerWidget {
         ref.read(selectedTabIndexProvider.notifier).state = index;
       },
       behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark ? const Color(0x336366F1) : const Color(0x336366F1))
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
+      child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 20,
-              color: isSelected
-                  ? LiquidTheme.accentLight
-                  : (isDark
-                        ? LiquidTheme.darkTextMuted
-                        : LiquidTheme.lightTextMuted),
+            AnimatedScale(
+              scale: isSelected ? 1.08 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutBack,
+              child: Icon(
+                icon,
+                size: 20,
+                color: isSelected
+                    ? (isDark ? Colors.white : LiquidTheme.accentLight)
+                    : (isDark
+                          ? LiquidTheme.darkTextMuted
+                          : LiquidTheme.lightTextMuted),
+              ),
             ),
             const SizedBox(height: 3),
             FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                maxLines: 1,
+              child: AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 200),
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   color: isSelected
-                      ? LiquidTheme.accentLight
+                      ? (isDark ? Colors.white : LiquidTheme.accent)
                       : (isDark
                             ? LiquidTheme.darkTextMuted
                             : LiquidTheme.lightTextMuted),
                 ),
+                child: Text(label, maxLines: 1),
               ),
             ),
           ],

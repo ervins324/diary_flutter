@@ -9,6 +9,7 @@ import '../../providers/alerts_provider.dart';
 import '../../providers/api_client_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../bells/bells_sheet.dart';
+import '../common/widgets/liquid_sliding_switcher.dart';
 import '../server_setup/server_setup_screen.dart';
 import '../subjects/subjects_sheet.dart';
 
@@ -505,18 +506,19 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment(value: 'uk', label: Text('Українська')),
-                      ButtonSegment(value: 'en', label: Text('English')),
-                    ],
-                    selected: {locale.languageCode},
-                    onSelectionChanged: (set) {
-                      ref.read(localeProvider.notifier).setLocale(set.first);
-                    },
-                  ),
+                LiquidSlidingSwitcher<String>(
+                  height: 44,
+                  borderRadius: 14,
+                  isDark: isDark,
+                  isPerfMode: performanceMode,
+                  selectedValue: locale.languageCode,
+                  onSelectionChanged: (val) {
+                    ref.read(localeProvider.notifier).setLocale(val);
+                  },
+                  segments: const [
+                    LiquidSegment(value: 'uk', label: 'Українська'),
+                    LiquidSegment(value: 'en', label: 'English'),
+                  ],
                 ),
                 const Divider(height: 28),
 
@@ -530,32 +532,29 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: SegmentedButton<ThemeMode>(
-                    segments: [
-                      ButtonSegment(
-                        value: ThemeMode.dark,
-                        icon: const Icon(Icons.dark_mode_rounded, size: 16),
-                        label: Text(loc.translate('theme_dark')),
-                      ),
-                      ButtonSegment(
-                        value: ThemeMode.light,
-                        icon: const Icon(Icons.light_mode_rounded, size: 16),
-                        label: Text(loc.translate('theme_light')),
-                      ),
-                    ],
-                    selected: {
-                      themeMode == ThemeMode.light
-                          ? ThemeMode.light
-                          : ThemeMode.dark,
-                    },
-                    onSelectionChanged: (set) {
-                      ref
-                          .read(themeModeProvider.notifier)
-                          .setThemeMode(set.first);
-                    },
-                  ),
+                LiquidSlidingSwitcher<ThemeMode>(
+                  height: 44,
+                  borderRadius: 14,
+                  isDark: isDark,
+                  isPerfMode: performanceMode,
+                  selectedValue: themeMode == ThemeMode.light
+                      ? ThemeMode.light
+                      : ThemeMode.dark,
+                  onSelectionChanged: (val) {
+                    ref.read(themeModeProvider.notifier).setThemeMode(val);
+                  },
+                  segments: [
+                    LiquidSegment(
+                      value: ThemeMode.dark,
+                      icon: Icons.dark_mode_rounded,
+                      label: loc.translate('theme_dark'),
+                    ),
+                    LiquidSegment(
+                      value: ThemeMode.light,
+                      icon: Icons.light_mode_rounded,
+                      label: loc.translate('theme_light'),
+                    ),
+                  ],
                 ),
                 const Divider(height: 28),
 

@@ -1,5 +1,18 @@
 # Updates Log
 
+## [1.0.9] - 2026-09-30
+### Added & Optimized
+- **Liquid Glass Sliding Switchers (Smooth Physical Translation)**:
+  - **Bottom Navigation Bar**: Replaced individual fading button highlights with an `AnimatedPositioned` glowing liquid glass capsule that smoothly translates (slides) across the bar between tabs with `Curves.easeOutCubic`. Tab icons subtly scale with `AnimatedScale` and labels smoothly transition typography via `AnimatedDefaultTextStyle`.
+  - **Horizontal Page Translation**: Transformed `MainScaffold` into a stateful controller with `PageView` and `KeepAliveWrapper`, providing silky-smooth horizontal screen translation when switching tabs while preserving full scroll positions and states.
+  - **Reusable `LiquidSlidingSwitcher<T>` Component**: Created an atomic, flexible liquid sliding segmented control with smooth translating gradient capsules and soft glow lighting.
+  - **Stats Screen Switchers**: Upgraded Schedule Mode (`Actual` / `Numerator` / `Denominator`), Metric Switcher (`Time` / `Lessons`), and View Switcher (`By Subjects` / `By Days`) to `LiquidSlidingSwitcher`.
+  - **Settings Screen Switchers**: Replaced standard segmented buttons with `LiquidSlidingSwitcher` for Language (`Українська` / `English`) and Theme (`Dark` / `Light`).
+  - **Week Selector Day Track**: Replaced 6 disconnected day chip cards with a unified continuous liquid sliding track where the active day capsule smoothly glides from day to day with subtle today indicators.
+- **WebSocket Unhandled Exception & Network Resilience Fix**:
+  - Attached explicit error handlers to `WebSocketChannel.ready` and `stream.listen(cancelOnError: true)` in `AirRaidAlertNotifier`.
+  - Safely handled DNS lookup failures (`SocketException: Failed host lookup: 'neptun.in.ua'`), preventing unhandled Dart VM zone exceptions when device is offline or network is unreachable.
+
 ## [1.0.8] - 2026-09-30
 ### Added & Optimized
 - **Complete Elimination of Raster Stalls & `saveLayer` Overhead**:

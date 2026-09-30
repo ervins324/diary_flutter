@@ -108,169 +108,216 @@ class WeekSelector extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
 
-          // Day chips
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(6, (index) {
-              final d = days[index];
-              final isSelected =
-                  d.year == selectedDate.year &&
-                  d.month == selectedDate.month &&
-                  d.day == selectedDate.day;
-              final isToday =
-                  d.year == DateTime.now().year &&
-                  d.month == DateTime.now().month &&
-                  d.day == DateTime.now().day;
+          // Day chips track with smooth sliding liquid glass capsule
+          Builder(
+            builder: (context) {
+              final selectedDayIndex = days.indexWhere(
+                (d) =>
+                    d.year == selectedDate.year &&
+                    d.month == selectedDate.month &&
+                    d.day == selectedDate.day,
+              );
+              final validDayIndex = selectedDayIndex >= 0
+                  ? selectedDayIndex
+                  : 0;
 
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    ref.read(selectedDateProvider.notifier).state = d;
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 2.0),
-                    child: isPerfMode
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(14.0),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 8.0,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? (isDark
-                                          ? const Color(0x666366F1)
-                                          : const Color(0xCC6366F1))
-                                    : (isDark
-                                          ? const Color(0x381E293B)
-                                          : const Color(0xB3FFFFFF)),
-                                borderRadius: BorderRadius.circular(14.0),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? LiquidTheme.accentLight
-                                      : (isToday
-                                            ? LiquidTheme.accent.withValues(
-                                                alpha: 0.4,
-                                              )
-                                            : (isDark
-                                                  ? LiquidTheme.darkBorder
-                                                  : LiquidTheme.lightBorder)),
-                                  width: isSelected ? 1.5 : 1.0,
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    loc.translate(dayKeys[index]),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : (isDark
-                                                ? LiquidTheme.darkTextSecondary
-                                                : LiquidTheme
-                                                      .lightTextSecondary),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${d.day}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.w500,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : (isDark
-                                                ? Colors.white70
-                                                : Colors.black87),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        : LiquidGlassLens(
-                            style: LiquidGlassStyle(
-                              shape:
-                                  const LiquidGlassShape.continuousRoundedRectangle(
-                                    cornerRadius: 14.0,
-                                  ),
-                              appearance: LiquidGlassAppearance(
-                                color: isSelected
-                                    ? (isDark
-                                          ? const Color(0x666366F1)
-                                          : const Color(0xCC6366F1))
-                                    : (isDark
-                                          ? const Color(0x1A1E293B)
-                                          : const Color(0x33CBD5E1)),
-                                blur: const LiquidGlassBlur(
-                                  sigmaX: 4.0,
-                                  sigmaY: 4.0,
-                                ),
-                              ),
-                              refraction: const LiquidGlassRefraction(
-                                distortion: 0.04,
-                              ),
-                              liteGlass: LiquidGlassLitePickup.blend,
-                            ),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 8.0,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(14.0),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? LiquidTheme.accentLight
-                                      : (isToday
-                                            ? LiquidTheme.accent.withValues(
-                                                alpha: 0.4,
-                                              )
-                                            : Colors.transparent),
-                                  width: isSelected ? 1.5 : 1.0,
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    loc.translate(dayKeys[index]),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : (isDark
-                                                ? LiquidTheme.darkTextSecondary
-                                                : LiquidTheme
-                                                      .lightTextSecondary),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${d.day}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.w500,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : (isDark
-                                                ? Colors.white70
-                                                : Colors.black87),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+              final daySelectorContent = Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isPerfMode
+                      ? (isDark
+                            ? const Color(0x381E293B)
+                            : const Color(0xB3FFFFFF))
+                      : (isDark
+                            ? const Color(0x221E293B)
+                            : const Color(0x80FFFFFF)),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark
+                        ? LiquidTheme.darkBorder
+                        : LiquidTheme.lightBorder,
                   ),
                 ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final itemWidth = constraints.maxWidth / 6;
+
+                    return Stack(
+                      children: [
+                        // Smooth sliding liquid glass indicator capsule
+                        AnimatedPositioned(
+                          duration: const Duration(milliseconds: 260),
+                          curve: Curves.easeOutCubic,
+                          left: validDayIndex * itemWidth,
+                          top: 0,
+                          bottom: 0,
+                          width: itemWidth,
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: isDark
+                                    ? [
+                                        LiquidTheme.accent.withValues(
+                                          alpha: 0.5,
+                                        ),
+                                        Colors.purpleAccent.withValues(
+                                          alpha: 0.35,
+                                        ),
+                                      ]
+                                    : [
+                                        LiquidTheme.accent.withValues(
+                                          alpha: 0.35,
+                                        ),
+                                        Colors.purpleAccent.withValues(
+                                          alpha: 0.22,
+                                        ),
+                                      ],
+                              ),
+                              borderRadius: BorderRadius.circular(13),
+                              border: Border.all(
+                                color: isDark
+                                    ? LiquidTheme.accentLight.withValues(
+                                        alpha: 0.6,
+                                      )
+                                    : LiquidTheme.accent.withValues(alpha: 0.5),
+                                width: 1.2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: LiquidTheme.accent.withValues(
+                                    alpha: isDark ? 0.35 : 0.2,
+                                  ),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Interactive 6 day chips
+                        Row(
+                          children: List.generate(6, (index) {
+                            final d = days[index];
+                            final isSelected = index == validDayIndex;
+                            final isToday =
+                                d.year == DateTime.now().year &&
+                                d.month == DateTime.now().month &&
+                                d.day == DateTime.now().day;
+
+                            return Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  ref
+                                          .read(selectedDateProvider.notifier)
+                                          .state =
+                                      d;
+                                },
+                                behavior: HitTestBehavior.opaque,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 6.0,
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          AnimatedDefaultTextStyle(
+                                            duration: const Duration(
+                                              milliseconds: 180,
+                                            ),
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : (isDark
+                                                        ? LiquidTheme
+                                                              .darkTextSecondary
+                                                        : LiquidTheme
+                                                              .lightTextSecondary),
+                                            ),
+                                            child: Text(
+                                              loc.translate(dayKeys[index]),
+                                            ),
+                                          ),
+                                          if (isToday) ...[
+                                            const SizedBox(width: 3),
+                                            Container(
+                                              width: 4,
+                                              height: 4,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: isSelected
+                                                    ? Colors.white
+                                                    : LiquidTheme.accentLight,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                      const SizedBox(height: 2),
+                                      AnimatedDefaultTextStyle(
+                                        duration: const Duration(
+                                          milliseconds: 180,
+                                        ),
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: isSelected
+                                              ? FontWeight.bold
+                                              : FontWeight.w500,
+                                          color: isSelected
+                                              ? Colors.white
+                                              : (isDark
+                                                    ? Colors.white70
+                                                    : Colors.black87),
+                                        ),
+                                        child: Text('${d.day}'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               );
-            }),
+
+              return isPerfMode
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(16.0),
+                      child: daySelectorContent,
+                    )
+                  : LiquidGlassLens(
+                      style: LiquidGlassStyle(
+                        shape:
+                            const LiquidGlassShape.continuousRoundedRectangle(
+                              cornerRadius: 16.0,
+                            ),
+                        appearance: LiquidGlassAppearance(
+                          color: isDark
+                              ? const Color(0x1A1E293B)
+                              : const Color(0x33CBD5E1),
+                          blur: const LiquidGlassBlur(sigmaX: 4.0, sigmaY: 4.0),
+                        ),
+                        refraction: const LiquidGlassRefraction(
+                          distortion: 0.04,
+                        ),
+                        liteGlass: LiquidGlassLitePickup.blend,
+                      ),
+                      child: daySelectorContent,
+                    );
+            },
           ),
         ],
       ),
