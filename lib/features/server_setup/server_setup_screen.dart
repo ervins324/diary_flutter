@@ -50,11 +50,15 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
       _statusMessage = null;
     });
 
-    ref.read(serverConnectionProvider.notifier).updateUrls(
+    ref
+        .read(serverConnectionProvider.notifier)
+        .updateUrls(
           mainUrl: rawUrl.isNotEmpty ? rawUrl : null,
           tailscaleUrl: rawTailscale,
         );
-    final ok = await ref.read(serverConnectionProvider.notifier).checkConnection();
+    final ok = await ref
+        .read(serverConnectionProvider.notifier)
+        .checkConnection();
 
     if (!mounted) return;
     final loc = AppLocalizations.of(context);
@@ -66,7 +70,8 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
       _testSuccess = ok;
       if (ok) {
         if (api.isTailscaleActive) {
-          _statusMessage = '${loc.translate('connection_ok')} (${loc.translate('tailscale_active')})';
+          _statusMessage =
+              '${loc.translate('connection_ok')} (${loc.translate('tailscale_active')})';
         } else {
           _statusMessage = loc.translate('connection_ok');
         }
@@ -81,7 +86,9 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
   void _saveAndProceed() {
     final rawUrl = _urlController.text.trim();
     final rawTailscale = _tailscaleController.text.trim();
-    ref.read(serverConnectionProvider.notifier).updateUrls(
+    ref
+        .read(serverConnectionProvider.notifier)
+        .updateUrls(
           mainUrl: rawUrl.isNotEmpty ? rawUrl : null,
           tailscaleUrl: rawTailscale,
         );
@@ -107,7 +114,9 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(28),
                     border: Border.all(
-                      color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                      color: isDark
+                          ? LiquidTheme.darkBorder
+                          : LiquidTheme.lightBorder,
                     ),
                   ),
                   child: Column(
@@ -147,7 +156,9 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13,
-                          color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
+                          color: isDark
+                              ? LiquidTheme.darkTextSecondary
+                              : LiquidTheme.lightTextSecondary,
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -163,26 +174,40 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
                           labelText: loc.translate('primary_server'),
                           hintText: 'http://192.168.1.100:8080',
                           labelStyle: TextStyle(
-                            color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
+                            color: isDark
+                                ? LiquidTheme.darkTextSecondary
+                                : LiquidTheme.lightTextSecondary,
                           ),
-                          prefixIcon: const Icon(Icons.link_rounded, color: LiquidTheme.accentLight),
+                          prefixIcon: const Icon(
+                            Icons.link_rounded,
+                            color: LiquidTheme.accentLight,
+                          ),
                           filled: true,
-                          fillColor: isDark ? const Color(0x261E293B) : const Color(0x26FFFFFF),
+                          fillColor: isDark
+                              ? const Color(0x261E293B)
+                              : const Color(0x26FFFFFF),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                              color: isDark
+                                  ? LiquidTheme.darkBorder
+                                  : LiquidTheme.lightBorder,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                              color: isDark
+                                  ? LiquidTheme.darkBorder
+                                  : LiquidTheme.lightBorder,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: LiquidTheme.accent, width: 2),
+                            borderSide: const BorderSide(
+                              color: LiquidTheme.accent,
+                              width: 2,
+                            ),
                           ),
                         ),
                       ),
@@ -202,29 +227,45 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
                           helperMaxLines: 2,
                           helperStyle: TextStyle(
                             fontSize: 11,
-                            color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                            color: isDark
+                                ? LiquidTheme.darkTextMuted
+                                : LiquidTheme.lightTextMuted,
                           ),
                           labelStyle: TextStyle(
-                            color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
+                            color: isDark
+                                ? LiquidTheme.darkTextSecondary
+                                : LiquidTheme.lightTextSecondary,
                           ),
-                          prefixIcon: const Icon(Icons.vpn_lock_rounded, color: Colors.purpleAccent),
+                          prefixIcon: const Icon(
+                            Icons.vpn_lock_rounded,
+                            color: Colors.purpleAccent,
+                          ),
                           filled: true,
-                          fillColor: isDark ? const Color(0x261E293B) : const Color(0x26FFFFFF),
+                          fillColor: isDark
+                              ? const Color(0x261E293B)
+                              : const Color(0x26FFFFFF),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                              color: isDark
+                                  ? LiquidTheme.darkBorder
+                                  : LiquidTheme.lightBorder,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                              color: isDark
+                                  ? LiquidTheme.darkBorder
+                                  : LiquidTheme.lightBorder,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: Colors.purpleAccent, width: 2),
+                            borderSide: const BorderSide(
+                              color: Colors.purpleAccent,
+                              width: 2,
+                            ),
                           ),
                         ),
                       ),
@@ -236,7 +277,9 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0x336366F1),
                           foregroundColor: LiquidTheme.accentLight,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           elevation: 0,
                         ),
@@ -244,7 +287,10 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
                               )
                             : const Icon(Icons.network_check_rounded),
                         label: Text(loc.translate('test_connection')),
@@ -254,7 +300,10 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
                       if (_statusMessage != null) ...[
                         const SizedBox(height: 12),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
                           decoration: BoxDecoration(
                             color: _testSuccess == true
                                 ? LiquidTheme.success.withValues(alpha: 0.15)
@@ -269,8 +318,12 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
                           child: Row(
                             children: [
                               Icon(
-                                _testSuccess == true ? Icons.check_circle_rounded : Icons.error_outline_rounded,
-                                color: _testSuccess == true ? LiquidTheme.success : LiquidTheme.danger,
+                                _testSuccess == true
+                                    ? Icons.check_circle_rounded
+                                    : Icons.error_outline_rounded,
+                                color: _testSuccess == true
+                                    ? LiquidTheme.success
+                                    : LiquidTheme.danger,
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
@@ -278,7 +331,9 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
                                 child: Text(
                                   _statusMessage!,
                                   style: TextStyle(
-                                    color: _testSuccess == true ? LiquidTheme.success : LiquidTheme.danger,
+                                    color: _testSuccess == true
+                                        ? LiquidTheme.success
+                                        : LiquidTheme.danger,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -297,13 +352,18 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: LiquidTheme.accent,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           elevation: 2,
                         ),
                         child: Text(
                           loc.translate('save_and_continue'),
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ],

@@ -38,7 +38,51 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   }
 }
 
-final themeModeProvider =
-    StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
+final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((
+  ref,
+) {
   return ThemeModeNotifier();
 });
+
+class ShowClassroomsNotifier extends StateNotifier<bool> {
+  ShowClassroomsNotifier() : super(HiveBoxes.getShowClassrooms());
+
+  void toggle(bool val) {
+    HiveBoxes.setShowClassrooms(val);
+    state = val;
+  }
+}
+
+final showClassroomsProvider =
+    StateNotifierProvider<ShowClassroomsNotifier, bool>((ref) {
+      return ShowClassroomsNotifier();
+    });
+
+class SkipWeekendsNotifier extends StateNotifier<bool> {
+  SkipWeekendsNotifier() : super(HiveBoxes.getSkipWeekends());
+
+  void toggle(bool val) {
+    HiveBoxes.setSkipWeekends(val);
+    state = val;
+  }
+}
+
+final skipWeekendsProvider = StateNotifierProvider<SkipWeekendsNotifier, bool>((
+  ref,
+) {
+  return SkipWeekendsNotifier();
+});
+
+class PerformanceModeNotifier extends StateNotifier<bool> {
+  PerformanceModeNotifier() : super(HiveBoxes.getPerformanceMode());
+
+  void toggle(bool val) {
+    HiveBoxes.setPerformanceMode(val);
+    state = val;
+  }
+}
+
+final performanceModeProvider =
+    StateNotifierProvider<PerformanceModeNotifier, bool>((ref) {
+      return PerformanceModeNotifier();
+    });

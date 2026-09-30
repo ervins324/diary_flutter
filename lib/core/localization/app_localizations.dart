@@ -150,7 +150,8 @@ class AppLocalizations {
       'connection_ok': 'З\'єднання успішне! Сервер доступний.',
       'connection_failed': 'Не вдалося підключитися до сервера.',
       'server_unreachable_title': 'Сервер недоступний',
-      'server_unreachable_desc': 'Не вдалося з\'єднатися із сервером. Перевірте адресу у локальній мережі.',
+      'server_unreachable_desc':
+          'Не вдалося з\'єднатися із сервером. Перевірте адресу у локальній мережі.',
       'configure_server_btn': 'Налаштувати адресу',
       'retry': 'Спробувати знову',
       'sync_status': 'Стан синхронізації',
@@ -158,7 +159,8 @@ class AppLocalizations {
       'synced': 'Синхронізовано',
       'syncing': 'Синхронізація...',
       'auto_sync': 'Авто-синхронізація',
-      'auto_sync_desc': 'Автоматично оновлювати розклад та синхронізувати зміни',
+      'auto_sync_desc':
+          'Автоматично оновлювати розклад та синхронізувати зміни',
       'sync_interval': 'Інтервал авто-оновлення',
       'sync_interval_15s': '15 с',
       'sync_interval_30s': '30 с',
@@ -177,7 +179,8 @@ class AppLocalizations {
       'tailscale_fallback': 'Резервний сервер (Tailscale)',
       'tailscale_url': 'Адреса Tailscale (Tailnet IP)',
       'tailscale_url_hint': 'наприклад http://100.x.y.z:8080',
-      'tailscale_desc': 'Автоматичний перехід на Tailnet IP у разі недоступності основного сервера',
+      'tailscale_desc':
+          'Автоматичний перехід на Tailnet IP у разі недоступності основного сервера',
       'tailscale_active': 'Використовується резервний канал Tailscale',
       'tailscale_not_configured': 'Не налаштовано',
       'primary_server': 'Основний сервер (LAN)',
@@ -204,6 +207,16 @@ class AppLocalizations {
       'theme_dark': 'Темна',
       'theme_light': 'Світла',
       'theme_system': 'Системна',
+
+      // Display & Performance
+      'display_settings': 'Відображення та інтерфейс',
+      'show_classrooms': 'Показувати кабінети',
+      'show_classrooms_desc': 'Відображати номери кабінетів у розкладі занять',
+      'skip_weekends': 'Пропускати вихідні',
+      'skip_weekends_desc': 'Автоматично відкривати понеділок у вихідні дні',
+      'performance_mode': 'Плавне гортання (FPS)',
+      'performance_mode_desc':
+          'Оптимізація графіки без затримок для 60/120 FPS',
     },
     'en': {
       // Navigation
@@ -343,7 +356,8 @@ class AppLocalizations {
       'connection_ok': 'Connected successfully! Server is healthy.',
       'connection_failed': 'Could not connect to server.',
       'server_unreachable_title': 'Server Unreachable',
-      'server_unreachable_desc': 'Could not reach server. Check local network IP or configure in Settings.',
+      'server_unreachable_desc':
+          'Could not reach server. Check local network IP or configure in Settings.',
       'configure_server_btn': 'Configure Address',
       'retry': 'Retry',
       'sync_status': 'Sync Status',
@@ -370,7 +384,8 @@ class AppLocalizations {
       'tailscale_fallback': 'Fallback Server (Tailscale)',
       'tailscale_url': 'Tailscale Address (Tailnet IP)',
       'tailscale_url_hint': 'e.g. http://100.x.y.z:8080',
-      'tailscale_desc': 'Automatic failover to Tailnet IP if primary server is unreachable',
+      'tailscale_desc':
+          'Automatic failover to Tailnet IP if primary server is unreachable',
       'tailscale_active': 'Using Tailscale fallback channel',
       'tailscale_not_configured': 'Not configured',
       'primary_server': 'Primary Server (LAN)',
@@ -397,6 +412,16 @@ class AppLocalizations {
       'theme_dark': 'Dark',
       'theme_light': 'Light',
       'theme_system': 'System',
+
+      // Display & Performance
+      'display_settings': 'Display & Interface',
+      'show_classrooms': 'Show Classrooms',
+      'show_classrooms_desc': 'Display classroom numbers in schedule view',
+      'skip_weekends': 'Skip Weekends to Monday',
+      'skip_weekends_desc': 'Automatically switch to Monday on weekends',
+      'performance_mode': 'Smooth Scrolling (FPS)',
+      'performance_mode_desc':
+          'Optimized rendering for responsive 60/120 FPS scrolling',
     },
   };
 
@@ -414,7 +439,8 @@ class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   bool isSupported(Locale locale) => ['uk', 'en'].contains(locale.languageCode);
 
   @override
-  Future<AppLocalizations> load(Locale locale) async => AppLocalizations(locale);
+  Future<AppLocalizations> load(Locale locale) async =>
+      AppLocalizations(locale);
 
   @override
   bool shouldReload(AppLocalizationsDelegate old) => false;

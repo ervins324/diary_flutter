@@ -8,6 +8,7 @@ import '../../homework/widgets/homework_form_dialog.dart';
 import '../../notes/widgets/note_form_dialog.dart';
 import '../../../providers/homework_provider.dart';
 import '../../../providers/notes_provider.dart';
+import '../../../providers/settings_provider.dart';
 import 'lesson_slot_card.dart';
 
 /// Modal bottom sheet displaying detailed homework and notes for a clicked lesson.
@@ -26,14 +27,23 @@ class LessonDetailSheet extends ConsumerWidget {
     final allHomework = ref.watch(homeworkListProvider);
     final allNotes = ref.watch(notesListProvider);
 
-    final lessonHw = allHomework.where((h) =>
-        h.dueDate == lesson.date &&
-        (h.subjectId == lesson.subject.id || h.lessonOrder == lesson.lessonOrder)).toList();
+    final lessonHw = allHomework
+        .where(
+          (h) =>
+              h.dueDate == lesson.date &&
+              (h.subjectId == lesson.subject.id ||
+                  h.lessonOrder == lesson.lessonOrder),
+        )
+        .toList();
 
-    final lessonNotes = allNotes.where((n) =>
-        n.date == lesson.date &&
-        n.subjectId == lesson.subject.id &&
-        n.lessonOrder == lesson.lessonOrder).toList();
+    final lessonNotes = allNotes
+        .where(
+          (n) =>
+              n.date == lesson.date &&
+              n.subjectId == lesson.subject.id &&
+              n.lessonOrder == lesson.lessonOrder,
+        )
+        .toList();
 
     return Container(
       decoration: BoxDecoration(
@@ -51,7 +61,9 @@ class LessonDetailSheet extends ConsumerWidget {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0x4094A3B8) : const Color(0x4064748B),
+                color: isDark
+                    ? const Color(0x4094A3B8)
+                    : const Color(0x4064748B),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -83,7 +95,9 @@ class LessonDetailSheet extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0x2694A3B8) : const Color(0x2664748B),
+                  color: isDark
+                      ? const Color(0x2694A3B8)
+                      : const Color(0x2664748B),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -96,13 +110,17 @@ class LessonDetailSheet extends ConsumerWidget {
               ),
             ],
           ),
-          if (lesson.cabinet != null) ...[
+          if (ref.watch(showClassroomsProvider) &&
+              lesson.cabinet != null &&
+              lesson.cabinet!.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
               '${loc.translate('cab')} ${lesson.cabinet}',
               style: TextStyle(
                 fontSize: 13,
-                color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
+                color: isDark
+                    ? LiquidTheme.darkTextSecondary
+                    : LiquidTheme.lightTextSecondary,
               ),
             ),
           ],
@@ -149,7 +167,9 @@ class LessonDetailSheet extends ConsumerWidget {
                 loc.translate('no_homework'),
                 style: TextStyle(
                   fontSize: 13,
-                  color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                  color: isDark
+                      ? LiquidTheme.darkTextMuted
+                      : LiquidTheme.lightTextMuted,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -162,9 +182,13 @@ class LessonDetailSheet extends ConsumerWidget {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
-                  color: isDark ? const Color(0x1F334155) : const Color(0x22E2E8F0),
+                  color: isDark
+                      ? const Color(0x1F334155)
+                      : const Color(0x22E2E8F0),
                   border: Border.all(
-                    color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                    color: isDark
+                        ? LiquidTheme.darkBorder
+                        : LiquidTheme.lightBorder,
                   ),
                 ),
                 child: Column(
@@ -176,7 +200,9 @@ class LessonDetailSheet extends ConsumerWidget {
                           value: hw.isCompleted,
                           activeColor: LiquidTheme.success,
                           onChanged: (_) {
-                            ref.read(homeworkListProvider.notifier).toggleComplete(hw);
+                            ref
+                                .read(homeworkListProvider.notifier)
+                                .toggleComplete(hw);
                           },
                         ),
                         Expanded(
@@ -184,13 +210,19 @@ class LessonDetailSheet extends ConsumerWidget {
                             hw.text,
                             style: TextStyle(
                               fontSize: 14,
-                              decoration: hw.isCompleted ? TextDecoration.lineThrough : null,
+                              decoration: hw.isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : null,
                               color: isDark ? Colors.white : Colors.black87,
                             ),
                           ),
                         ),
                         if (hw.isPendingSync)
-                          const Icon(Icons.cloud_upload_outlined, size: 16, color: LiquidTheme.warning),
+                          const Icon(
+                            Icons.cloud_upload_outlined,
+                            size: 16,
+                            color: LiquidTheme.warning,
+                          ),
                       ],
                     ),
                     if (hw.images.isNotEmpty || hw.attachments.isNotEmpty)
@@ -250,7 +282,9 @@ class LessonDetailSheet extends ConsumerWidget {
                 loc.translate('no_notes'),
                 style: TextStyle(
                   fontSize: 13,
-                  color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                  color: isDark
+                      ? LiquidTheme.darkTextMuted
+                      : LiquidTheme.lightTextMuted,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -263,9 +297,13 @@ class LessonDetailSheet extends ConsumerWidget {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
-                  color: isDark ? const Color(0x1F334155) : const Color(0x22E2E8F0),
+                  color: isDark
+                      ? const Color(0x1F334155)
+                      : const Color(0x22E2E8F0),
                   border: Border.all(
-                    color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                    color: isDark
+                        ? LiquidTheme.darkBorder
+                        : LiquidTheme.lightBorder,
                   ),
                 ),
                 child: Column(

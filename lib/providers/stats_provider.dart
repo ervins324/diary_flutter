@@ -38,12 +38,7 @@ final weeklyStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
       'cancelled_lessons_count': 0,
       'total_cancelled_minutes': 0,
       'cancellation_reasons': <Map<String, dynamic>>[],
-      'event_counts': {
-        'control_work': 0,
-        'test': 0,
-        'essay': 0,
-        'project': 0,
-      },
+      'event_counts': {'control_work': 0, 'test': 0, 'essay': 0, 'project': 0},
       'homework_stats': {
         'total': 0,
         'completed': 0,

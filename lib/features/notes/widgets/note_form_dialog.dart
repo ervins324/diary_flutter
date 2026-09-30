@@ -48,7 +48,8 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
     );
 
     if (widget.preselectedDate != null) {
-      _selectedDate = DateTime.tryParse(widget.preselectedDate!) ?? DateTime.now();
+      _selectedDate =
+          DateTime.tryParse(widget.preselectedDate!) ?? DateTime.now();
     } else {
       _selectedDate = DateTime.now();
     }
@@ -68,7 +69,8 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
       final xFile = await _picker.pickImage(source: source, imageQuality: 85);
       if (xFile != null) {
         final appDir = await getApplicationDocumentsDirectory();
-        final fileName = 'note_${DateTime.now().millisecondsSinceEpoch}_${xFile.name}';
+        final fileName =
+            'note_${DateTime.now().millisecondsSinceEpoch}_${xFile.name}';
         final localFile = File('${appDir.path}/$fileName');
         await File(xFile.path).copy(localFile.path);
 
@@ -83,12 +85,23 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
     try {
       final res = await FilePicker.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'ppt', 'pptx', 'doc', 'docx', 'txt', 'png', 'jpg', 'jpeg'],
+        allowedExtensions: [
+          'pdf',
+          'ppt',
+          'pptx',
+          'doc',
+          'docx',
+          'txt',
+          'png',
+          'jpg',
+          'jpeg',
+        ],
       );
       if (res.isNotEmpty && res.first.path != null) {
         final origin = File(res.first.path!);
         final appDir = await getApplicationDocumentsDirectory();
-        final fileName = 'note_doc_${DateTime.now().millisecondsSinceEpoch}_${res.first.name}';
+        final fileName =
+            'note_doc_${DateTime.now().millisecondsSinceEpoch}_${res.first.name}';
         final localFile = File('${appDir.path}/$fileName');
         await origin.copy(localFile.path);
 
@@ -103,14 +116,17 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
     final text = _textController.text.trim();
     final subjects = ref.read(subjectsProvider);
     final subjectToSave = _selectedSubject != null
-        ? (subjects.where((s) => s.id == _selectedSubject!.id).firstOrNull ?? _selectedSubject)
+        ? (subjects.where((s) => s.id == _selectedSubject!.id).firstOrNull ??
+              _selectedSubject)
         : (subjects.isNotEmpty ? subjects.first : null);
     if (text.isEmpty || subjectToSave == null) return;
 
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
     final order = int.tryParse(_orderController.text.trim()) ?? 1;
 
-    ref.read(notesListProvider.notifier).addNote(
+    ref
+        .read(notesListProvider.notifier)
+        .addNote(
           subjectId: subjectToSave.id,
           date: dateStr,
           lessonOrder: order,
@@ -131,7 +147,7 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
     // Safely resolve the selected subject against the available subjects list
     final currentSubject = _selectedSubject != null && subjects.isNotEmpty
         ? (subjects.where((s) => s.id == _selectedSubject!.id).firstOrNull ??
-            subjects.first)
+              subjects.first)
         : (subjects.isNotEmpty ? subjects.first : null);
 
     return Container(
@@ -155,7 +171,9 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0x4094A3B8) : const Color(0x4064748B),
+                  color: isDark
+                      ? const Color(0x4094A3B8)
+                      : const Color(0x4064748B),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -179,18 +197,26 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
               decoration: InputDecoration(
                 labelText: loc.translate('subjects'),
                 labelStyle: TextStyle(
-                  color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
+                  color: isDark
+                      ? LiquidTheme.darkTextSecondary
+                      : LiquidTheme.lightTextSecondary,
                 ),
                 filled: true,
-                fillColor: isDark ? const Color(0x1F334155) : const Color(0x22E2E8F0),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                fillColor: isDark
+                    ? const Color(0x1F334155)
+                    : const Color(0x22E2E8F0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
               items: subjects.map((s) {
                 return DropdownMenuItem<SubjectModel>(
                   value: s,
                   child: Text(
                     s.name,
-                    style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
                   ),
                 );
               }).toList(),
@@ -215,17 +241,28 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
                       }
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 15,
+                      ),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0x1F334155) : const Color(0x22E2E8F0),
+                        color: isDark
+                            ? const Color(0x1F334155)
+                            : const Color(0x22E2E8F0),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                          color: isDark
+                              ? LiquidTheme.darkBorder
+                              : LiquidTheme.lightBorder,
                         ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_today_rounded, size: 16, color: LiquidTheme.accentLight),
+                          const Icon(
+                            Icons.calendar_today_rounded,
+                            size: 16,
+                            color: LiquidTheme.accentLight,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             DateFormat('yyyy-MM-dd').format(_selectedDate),
@@ -245,15 +282,23 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
                   child: TextField(
                     controller: _orderController,
                     keyboardType: TextInputType.number,
-                    style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
                     decoration: InputDecoration(
                       labelText: '#',
                       labelStyle: TextStyle(
-                        color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
+                        color: isDark
+                            ? LiquidTheme.darkTextSecondary
+                            : LiquidTheme.lightTextSecondary,
                       ),
                       filled: true,
-                      fillColor: isDark ? const Color(0x1F334155) : const Color(0x22E2E8F0),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      fillColor: isDark
+                          ? const Color(0x1F334155)
+                          : const Color(0x22E2E8F0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                   ),
                 ),
@@ -269,11 +314,17 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
               decoration: InputDecoration(
                 hintText: loc.translate('note_text'),
                 hintStyle: TextStyle(
-                  color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                  color: isDark
+                      ? LiquidTheme.darkTextMuted
+                      : LiquidTheme.lightTextMuted,
                 ),
                 filled: true,
-                fillColor: isDark ? const Color(0x1F334155) : const Color(0x22E2E8F0),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                fillColor: isDark
+                    ? const Color(0x1F334155)
+                    : const Color(0x22E2E8F0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -282,28 +333,40 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
             if (_stagedFiles.isNotEmpty) ...[
               AttachmentChipsView(
                 images: _stagedFiles
-                    .where((p) => AttachmentHelper.isImageAttachment('image', p))
+                    .where(
+                      (p) => AttachmentHelper.isImageAttachment('image', p),
+                    )
                     .toList(),
                 attachments: _stagedFiles
-                    .where((p) => !AttachmentHelper.isImageAttachment('image', p))
-                    .map((p) => AttachmentItem(
-                          name: p.split(Platform.pathSeparator).last,
-                          type: p.toLowerCase().endsWith('.pdf') ? 'pdf' : 'presentation',
-                          url: p,
-                          localFilePath: p,
-                        ))
+                    .where(
+                      (p) => !AttachmentHelper.isImageAttachment('image', p),
+                    )
+                    .map(
+                      (p) => AttachmentItem(
+                        name: p.split(Platform.pathSeparator).last,
+                        type: p.toLowerCase().endsWith('.pdf')
+                            ? 'pdf'
+                            : 'presentation',
+                        url: p,
+                        localFilePath: p,
+                      ),
+                    )
                     .toList(),
                 isDark: isDark,
                 onRemoveImage: (idx) {
                   final imgList = _stagedFiles
-                      .where((p) => AttachmentHelper.isImageAttachment('image', p))
+                      .where(
+                        (p) => AttachmentHelper.isImageAttachment('image', p),
+                      )
                       .toList();
                   final target = imgList[idx];
                   setState(() => _stagedFiles.remove(target));
                 },
                 onRemoveAttachment: (idx) {
                   final docList = _stagedFiles
-                      .where((p) => !AttachmentHelper.isImageAttachment('image', p))
+                      .where(
+                        (p) => !AttachmentHelper.isImageAttachment('image', p),
+                      )
                       .toList();
                   final target = docList[idx];
                   setState(() => _stagedFiles.remove(target));
@@ -321,7 +384,9 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
                   label: Text(loc.translate('camera')),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: LiquidTheme.accentLight,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -331,7 +396,9 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
                   label: Text(loc.translate('gallery')),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: LiquidTheme.accentLight,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -351,12 +418,17 @@ class _NoteFormDialogState extends ConsumerState<NoteFormDialog> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: LiquidTheme.accent,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: Text(
                 loc.translate('save'),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
           ],

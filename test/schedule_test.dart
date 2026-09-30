@@ -14,7 +14,10 @@ void main() {
 
     test('calculateWeekType calculates denominator for subsequent week', () {
       final nextWeekDate = DateTime(2026, 9, 8);
-      final result = calculateWeekType(nextWeekDate, anchorDateStr: '2026-09-01');
+      final result = calculateWeekType(
+        nextWeekDate,
+        anchorDateStr: '2026-09-01',
+      );
       expect(result, equals('denominator'));
     });
 

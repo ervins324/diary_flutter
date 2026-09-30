@@ -1,24 +1,23 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../database/hive_boxes.dart';
+import '../../providers/settings_provider.dart';
 
 /// Ambient gradient mesh background providing vibrant colors for LiquidGlass refraction.
 /// Optimized with a dedicated CustomPainter and RepaintBoundary for maximum frame performance.
-class AmbientBackground extends StatefulWidget {
+class AmbientBackground extends ConsumerStatefulWidget {
   final Widget child;
   final bool isDark;
 
-  const AmbientBackground({
-    super.key,
-    required this.child,
-    this.isDark = true,
-  });
+  const AmbientBackground({super.key, required this.child, this.isDark = true});
 
   @override
-  State<AmbientBackground> createState() => _AmbientBackgroundState();
+  ConsumerState<AmbientBackground> createState() => _AmbientBackgroundState();
 }
 
-class _AmbientBackgroundState extends State<AmbientBackground>
+class _AmbientBackgroundState extends ConsumerState<AmbientBackground>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late final AppLifecycleListener _lifecycleListener;
@@ -26,18 +25,23 @@ class _AmbientBackgroundState extends State<AmbientBackground>
   @override
   void initState() {
     super.initState();
-    // Gentle 30-second smooth loop
+    // Gentle 30-second smooth loop (only active if not in performance mode)
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 30),
-    )..repeat();
+    );
+    if (!HiveBoxes.getPerformanceMode()) {
+      _controller.repeat();
+    }
 
     // Lifecycle optimization: pause animation ticker when app is backgrounded or hidden
     _lifecycleListener = AppLifecycleListener(
       onPause: () => _controller.stop(),
       onHide: () => _controller.stop(),
       onResume: () {
-        if (mounted && !_controller.isAnimating) {
+        if (mounted &&
+            !HiveBoxes.getPerformanceMode() &&
+            !_controller.isAnimating) {
           _controller.repeat();
         }
       },
@@ -53,24 +57,40 @@ class _AmbientBackgroundState extends State<AmbientBackground>
 
   @override
   Widget build(BuildContext context) {
+    final isPerfMode = ref.watch(performanceModeProvider);
+    if (isPerfMode && _controller.isAnimating) {
+      _controller.stop();
+    } else if (!isPerfMode && !_controller.isAnimating) {
+      _controller.repeat();
+    }
+
     return RepaintBoundary(
       child: Stack(
         fit: StackFit.expand,
         children: [
           RepaintBoundary(
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, _) {
-                return CustomPaint(
-                  painter: AmbientMeshPainter(
-                    animationProgress: _controller.value,
-                    isDark: widget.isDark,
+            child: isPerfMode
+                ? CustomPaint(
+                    painter: AmbientMeshPainter(
+                      animationProgress: 0.0,
+                      isDark: widget.isDark,
+                    ),
+                    isComplex: true,
+                    willChange: false,
+                  )
+                : AnimatedBuilder(
+                    animation: _controller,
+                    builder: (context, _) {
+                      return CustomPaint(
+                        painter: AmbientMeshPainter(
+                          animationProgress: _controller.value,
+                          isDark: widget.isDark,
+                        ),
+                        isComplex: true,
+                        willChange: true,
+                      );
+                    },
                   ),
-                  isComplex: true,
-                  willChange: true,
-                );
-              },
-            ),
           ),
           widget.child,
         ],
@@ -91,17 +111,16 @@ class AmbientMeshPainter extends CustomPainter {
   static final Paint _paint2 = Paint();
   static final Paint _paint3 = Paint();
 
-  AmbientMeshPainter({
-    required this.animationProgress,
-    required this.isDark,
-  });
+  AmbientMeshPainter({required this.animationProgress, required this.isDark});
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.width <= 0 || size.height <= 0) return;
 
     // 1. Base solid background
-    _basePaint.color = isDark ? const Color(0xFF090D16) : const Color(0xFFF1F5F9);
+    _basePaint.color = isDark
+        ? const Color(0xFF090D16)
+        : const Color(0xFFF1F5F9);
     canvas.drawRect(Offset.zero & size, _basePaint);
 
     final t = animationProgress * 2 * math.pi;

@@ -5,6 +5,7 @@ import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme/liquid_theme.dart';
 import '../../providers/schedule_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../providers/stats_provider.dart';
 import '../schedule/widgets/lesson_slot_card.dart';
 
@@ -19,6 +20,7 @@ class StatsScreen extends ConsumerWidget {
     final scheduleMode = ref.watch(statsScheduleModeProvider);
     final metricMode = ref.watch(statsMetricModeProvider);
     final viewMode = ref.watch(statsViewModeProvider);
+    final isPerfMode = ref.watch(performanceModeProvider);
     final loc = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -27,218 +29,266 @@ class StatsScreen extends ConsumerWidget {
     final dateRangeStr =
         '${DateFormat('d MMM', loc.locale.languageCode).format(monday)} – ${DateFormat('d MMM yyyy', loc.locale.languageCode).format(sunday)}';
 
+    final scrollView = CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        // ── 1. Week Navigator ──────────────────────────────────────
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  onPressed: () {
+                    ref.read(statsDateProvider.notifier).state = statsDate
+                        .subtract(const Duration(days: 7));
+                  },
+                  icon: const Icon(Icons.chevron_left_rounded, size: 28),
+                  color: isDark ? Colors.white70 : Colors.black87,
+                ),
+                Column(
+                  children: [
+                    Text(
+                      loc.translate('weekly_overview'),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      dateRangeStr,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark
+                            ? LiquidTheme.darkTextMuted
+                            : LiquidTheme.lightTextMuted,
+                      ),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  onPressed: () {
+                    ref.read(statsDateProvider.notifier).state = statsDate.add(
+                      const Duration(days: 7),
+                    );
+                  },
+                  icon: const Icon(Icons.chevron_right_rounded, size: 28),
+                  color: isDark ? Colors.white70 : Colors.black87,
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // ── 2. Top Controls: Schedule Mode (Actual / Num / Denom) ──
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 4.0,
+            ),
+            child: _buildGlassCard(
+              isDark: isDark,
+              isPerfMode: isPerfMode,
+              radius: 14,
+              style: LiquidTheme.pillStyle(isDark: isDark, radius: 14),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isPerfMode
+                      ? (isDark
+                            ? const Color(0x381E293B)
+                            : const Color(0xB3FFFFFF))
+                      : null,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isDark
+                        ? LiquidTheme.darkBorder
+                        : LiquidTheme.lightBorder,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    _buildPillButton(
+                      label: loc.translate('stats_mode_actual'),
+                      isSelected: scheduleMode == 'actual',
+                      onTap: () =>
+                          ref.read(statsScheduleModeProvider.notifier).state =
+                              'actual',
+                    ),
+                    _buildPillButton(
+                      label: loc.translate('stats_mode_numerator'),
+                      isSelected: scheduleMode == 'numerator',
+                      onTap: () =>
+                          ref.read(statsScheduleModeProvider.notifier).state =
+                              'numerator',
+                    ),
+                    _buildPillButton(
+                      label: loc.translate('stats_mode_denominator'),
+                      isSelected: scheduleMode == 'denominator',
+                      onTap: () =>
+                          ref.read(statsScheduleModeProvider.notifier).state =
+                              'denominator',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // ── 3. Controls Row 2: Metric (Time / Lessons) & View (Subjects / Days)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+            child: Row(
+              children: [
+                // Metric Switcher: Time vs Lessons
+                Expanded(
+                  flex: 4,
+                  child: _buildGlassCard(
+                    isDark: isDark,
+                    isPerfMode: isPerfMode,
+                    radius: 12,
+                    style: LiquidTheme.pillStyle(isDark: isDark, radius: 12),
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: isPerfMode
+                            ? (isDark
+                                  ? const Color(0x381E293B)
+                                  : const Color(0xB3FFFFFF))
+                            : null,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark
+                              ? LiquidTheme.darkBorder
+                              : LiquidTheme.lightBorder,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          _buildPillButton(
+                            icon: Icons.access_time_rounded,
+                            label: loc.translate('stats_metric_time'),
+                            isSelected: metricMode == 'time',
+                            onTap: () =>
+                                ref
+                                        .read(statsMetricModeProvider.notifier)
+                                        .state =
+                                    'time',
+                          ),
+                          _buildPillButton(
+                            icon: Icons.tag_rounded,
+                            label: loc.translate('stats_metric_lessons'),
+                            isSelected: metricMode == 'lessons',
+                            onTap: () =>
+                                ref
+                                        .read(statsMetricModeProvider.notifier)
+                                        .state =
+                                    'lessons',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // View Switcher: Subjects vs Days
+                Expanded(
+                  flex: 5,
+                  child: _buildGlassCard(
+                    isDark: isDark,
+                    isPerfMode: isPerfMode,
+                    radius: 12,
+                    style: LiquidTheme.pillStyle(isDark: isDark, radius: 12),
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: isPerfMode
+                            ? (isDark
+                                  ? const Color(0x381E293B)
+                                  : const Color(0xB3FFFFFF))
+                            : null,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark
+                              ? LiquidTheme.darkBorder
+                              : LiquidTheme.lightBorder,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          _buildPillButton(
+                            icon: Icons.bar_chart_rounded,
+                            label: loc.translate('by_subjects'),
+                            isSelected: viewMode == 'subjects',
+                            onTap: () =>
+                                ref.read(statsViewModeProvider.notifier).state =
+                                    'subjects',
+                          ),
+                          _buildPillButton(
+                            icon: Icons.calendar_view_day_rounded,
+                            label: loc.translate('by_days'),
+                            isSelected: viewMode == 'days',
+                            onTap: () =>
+                                ref.read(statsViewModeProvider.notifier).state =
+                                    'days',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // ── 4. Main Stats Content ──────────────────────────────────
+        statsAsync.when(
+          data: (data) => _buildStatsContent(
+            context: context,
+            ref: ref,
+            data: data,
+            loc: loc,
+            isDark: isDark,
+            isPerfMode: isPerfMode,
+            metricMode: metricMode,
+            viewMode: viewMode,
+          ),
+          loading: () => const SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: CircularProgressIndicator(color: LiquidTheme.accent),
+            ),
+          ),
+          error: (err, _) => SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(child: Text('Error loading stats: $err')),
+          ),
+        ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 90)),
+      ],
+    );
+
+    final wrappedBatch = isPerfMode
+        ? scrollView
+        : LiquidGlassBatch(child: scrollView);
+
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(weeklyStatsProvider);
       },
       color: LiquidTheme.accent,
-      child: LiquidGlassBatch(
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-          // ── 1. Week Navigator ──────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      ref.read(statsDateProvider.notifier).state =
-                          statsDate.subtract(const Duration(days: 7));
-                    },
-                    icon: const Icon(Icons.chevron_left_rounded, size: 28),
-                    color: isDark ? Colors.white70 : Colors.black87,
-                  ),
-                  Column(
-                    children: [
-                      Text(
-                        loc.translate('weekly_overview'),
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        dateRangeStr,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      ref.read(statsDateProvider.notifier).state =
-                          statsDate.add(const Duration(days: 7));
-                    },
-                    icon: const Icon(Icons.chevron_right_rounded, size: 28),
-                    color: isDark ? Colors.white70 : Colors.black87,
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // ── 2. Top Controls: Schedule Mode (Actual / Num / Denom) ──
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-              child: LiquidGlassLens(
-                style: LiquidTheme.pillStyle(isDark: isDark, radius: 14),
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      _buildPillButton(
-                        label: loc.translate('stats_mode_actual'),
-                        isSelected: scheduleMode == 'actual',
-                        onTap: () =>
-                            ref.read(statsScheduleModeProvider.notifier).state = 'actual',
-                      ),
-                      _buildPillButton(
-                        label: loc.translate('stats_mode_numerator'),
-                        isSelected: scheduleMode == 'numerator',
-                        onTap: () =>
-                            ref.read(statsScheduleModeProvider.notifier).state = 'numerator',
-                      ),
-                      _buildPillButton(
-                        label: loc.translate('stats_mode_denominator'),
-                        isSelected: scheduleMode == 'denominator',
-                        onTap: () =>
-                            ref.read(statsScheduleModeProvider.notifier).state = 'denominator',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // ── 3. Controls Row 2: Metric (Time / Lessons) & View (Subjects / Days)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
-              child: Row(
-                children: [
-                  // Metric Switcher: Time vs Lessons
-                  Expanded(
-                    flex: 4,
-                    child: LiquidGlassLens(
-                      style: LiquidTheme.pillStyle(isDark: isDark, radius: 12),
-                      child: Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            _buildPillButton(
-                              icon: Icons.access_time_rounded,
-                              label: loc.translate('stats_metric_time'),
-                              isSelected: metricMode == 'time',
-                              onTap: () =>
-                                  ref.read(statsMetricModeProvider.notifier).state = 'time',
-                            ),
-                            _buildPillButton(
-                              icon: Icons.tag_rounded,
-                              label: loc.translate('stats_metric_lessons'),
-                              isSelected: metricMode == 'lessons',
-                              onTap: () =>
-                                  ref.read(statsMetricModeProvider.notifier).state = 'lessons',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // View Switcher: Subjects vs Days
-                  Expanded(
-                    flex: 5,
-                    child: LiquidGlassLens(
-                      style: LiquidTheme.pillStyle(isDark: isDark, radius: 12),
-                      child: Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            _buildPillButton(
-                              icon: Icons.bar_chart_rounded,
-                              label: loc.translate('by_subjects'),
-                              isSelected: viewMode == 'subjects',
-                              onTap: () =>
-                                  ref.read(statsViewModeProvider.notifier).state = 'subjects',
-                            ),
-                            _buildPillButton(
-                              icon: Icons.calendar_view_day_rounded,
-                              label: loc.translate('by_days'),
-                              isSelected: viewMode == 'days',
-                              onTap: () =>
-                                  ref.read(statsViewModeProvider.notifier).state = 'days',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // ── 4. Main Stats Content ──────────────────────────────────
-          statsAsync.when(
-            data: (data) => _buildStatsContent(
-              context: context,
-              ref: ref,
-              data: data,
-              loc: loc,
-              isDark: isDark,
-              metricMode: metricMode,
-              viewMode: viewMode,
-            ),
-            loading: () => const SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: CircularProgressIndicator(color: LiquidTheme.accent),
-              ),
-            ),
-            error: (err, _) => SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: Text('Error loading stats: $err'),
-              ),
-            ),
-          ),
-
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 90),
-          ),
-        ],
-      ),
-    ),
-  );
-}
+      child: wrappedBatch,
+    );
+  }
 
   Widget _buildPillButton({
     IconData? icon,
@@ -279,7 +329,9 @@ class StatsScreen extends ConsumerWidget {
                     softWrap: false,
                     style: TextStyle(
                       fontSize: 11,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
                       color: isSelected ? Colors.white : Colors.white70,
                     ),
                   ),
@@ -298,6 +350,7 @@ class StatsScreen extends ConsumerWidget {
     required Map<String, dynamic> data,
     required AppLocalizations loc,
     required bool isDark,
+    required bool isPerfMode,
     required String metricMode,
     required String viewMode,
   }) {
@@ -312,11 +365,14 @@ class StatsScreen extends ConsumerWidget {
         : <Map<String, dynamic>>[];
 
     final totalLessons = (data['total_lessons'] as num?)?.toInt() ?? 0;
-    final totalSubjects = (data['total_subjects'] as num?)?.toInt() ?? subjects.length;
+    final totalSubjects =
+        (data['total_subjects'] as num?)?.toInt() ?? subjects.length;
     final avgLessons = (data['avg_lessons_per_day'] as num?)?.toDouble() ?? 0.0;
     final totalBreakMins = (data['total_break_minutes'] as num?)?.toInt() ?? 0;
-    final cancelledCount = (data['cancelled_lessons_count'] as num?)?.toInt() ?? 0;
-    final cancelledMins = (data['total_cancelled_minutes'] as num?)?.toInt() ?? 0;
+    final cancelledCount =
+        (data['cancelled_lessons_count'] as num?)?.toInt() ?? 0;
+    final cancelledMins =
+        (data['total_cancelled_minutes'] as num?)?.toInt() ?? 0;
 
     final hwStats = (data['homework_stats'] is Map)
         ? Map<String, dynamic>.from(data['homework_stats'] as Map)
@@ -326,10 +382,14 @@ class StatsScreen extends ConsumerWidget {
     final hwFailed = (hwStats['failed'] as num?)?.toInt() ?? 0;
     final hwRate = (hwStats['completion_rate'] as num?)?.toDouble() ?? 100.0;
     final hwFailureRate = (hwStats['failure_rate'] as num?)?.toDouble() ?? 0.0;
-    final hwTotalSeconds = (hwStats['total_time_spent_seconds'] as num?)?.toInt() ?? 0;
-    final hwAvgSeconds = (hwStats['avg_time_spent_seconds'] as num?)?.toInt() ?? 0;
+    final hwTotalSeconds =
+        (hwStats['total_time_spent_seconds'] as num?)?.toInt() ?? 0;
+    final hwAvgSeconds =
+        (hwStats['avg_time_spent_seconds'] as num?)?.toInt() ?? 0;
     final failedItems = (hwStats['failed_items'] is List)
-        ? (hwStats['failed_items'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList()
+        ? (hwStats['failed_items'] as List)
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList()
         : <Map<String, dynamic>>[];
 
     final eventCounts = (data['event_counts'] is Map)
@@ -358,7 +418,10 @@ class StatsScreen extends ConsumerWidget {
         // ── Notice: Cancelled Lessons Callout ────────────────────────
         if (cancelledCount > 0)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 4.0,
+            ),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
@@ -368,7 +431,11 @@ class StatsScreen extends ConsumerWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.block_rounded, size: 18, color: Color(0xFFF43F5E)),
+                  const Icon(
+                    Icons.block_rounded,
+                    size: 18,
+                    color: Color(0xFFF43F5E),
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -388,15 +455,30 @@ class StatsScreen extends ConsumerWidget {
         // ── Notice: Academic Events Summary Badges ───────────────────
         if (eventCounts.values.any((v) => (v as num? ?? 0) > 0))
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-            child: LiquidGlassLens(
-              style: LiquidTheme.cardStyle(isDark: isDark, radius: 14),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 4.0,
+            ),
+            child: _buildGlassCard(
+              isDark: isDark,
+              isPerfMode: isPerfMode,
+              radius: 14,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
+                  color: isPerfMode
+                      ? (isDark
+                            ? const Color(0x381E293B)
+                            : const Color(0xB3FFFFFF))
+                      : null,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                    color: isDark
+                        ? LiquidTheme.darkBorder
+                        : LiquidTheme.lightBorder,
                   ),
                 ),
                 child: Wrap(
@@ -448,6 +530,7 @@ class StatsScreen extends ConsumerWidget {
             metricMode: metricMode,
             loc: loc,
             isDark: isDark,
+            isPerfMode: isPerfMode,
           )
         else
           _buildDaysView(
@@ -456,6 +539,7 @@ class StatsScreen extends ConsumerWidget {
             metricMode: metricMode,
             loc: loc,
             isDark: isDark,
+            isPerfMode: isPerfMode,
           ),
 
         const SizedBox(height: 14),
@@ -471,6 +555,7 @@ class StatsScreen extends ConsumerWidget {
                   Expanded(
                     child: _buildKpiCard(
                       isDark: isDark,
+                      isPerfMode: isPerfMode,
                       icon: Icons.timer_rounded,
                       iconColor: LiquidTheme.accentLight,
                       title: loc.translate('total_hours'),
@@ -482,6 +567,7 @@ class StatsScreen extends ConsumerWidget {
                   Expanded(
                     child: _buildKpiCard(
                       isDark: isDark,
+                      isPerfMode: isPerfMode,
                       icon: Icons.local_fire_department_rounded,
                       iconColor: Colors.amberAccent,
                       title: loc.translate('busiest_subject'),
@@ -489,7 +575,9 @@ class StatsScreen extends ConsumerWidget {
                           ? (busiestSubject['subject_name'] ?? '-')
                           : '-',
                       valueColor: busiestSubject != null
-                          ? parseHexColor(busiestSubject['color_hex'] ?? '#6366F1')
+                          ? parseHexColor(
+                              busiestSubject['color_hex'] ?? '#6366F1',
+                            )
                           : null,
                     ),
                   ),
@@ -503,6 +591,7 @@ class StatsScreen extends ConsumerWidget {
                   Expanded(
                     child: _buildKpiCard(
                       isDark: isDark,
+                      isPerfMode: isPerfMode,
                       icon: Icons.menu_book_rounded,
                       iconColor: Colors.indigoAccent,
                       title: loc.translate('stats_subjects_count'),
@@ -513,11 +602,13 @@ class StatsScreen extends ConsumerWidget {
                   Expanded(
                     child: _buildKpiCard(
                       isDark: isDark,
+                      isPerfMode: isPerfMode,
                       icon: Icons.calendar_month_rounded,
                       iconColor: Colors.blueAccent,
                       title: loc.translate('stats_lessons_count'),
                       value: '$totalLessons',
-                      subtitle: '~${avgLessons.toStringAsFixed(1)} ${loc.translate('stats_per_day')}',
+                      subtitle:
+                          '~${avgLessons.toStringAsFixed(1)} ${loc.translate('stats_per_day')}',
                     ),
                   ),
                 ],
@@ -525,14 +616,23 @@ class StatsScreen extends ConsumerWidget {
               const SizedBox(height: 10),
 
               // Row 3: Homework completion with multi-segment progress bar
-              LiquidGlassLens(
-                style: LiquidTheme.cardStyle(isDark: isDark, radius: 20),
+              _buildGlassCard(
+                isDark: isDark,
+                isPerfMode: isPerfMode,
+                radius: 20,
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
+                    color: isPerfMode
+                        ? (isDark
+                              ? const Color(0x381E293B)
+                              : const Color(0xB3FFFFFF))
+                        : null,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                      color: isDark
+                          ? LiquidTheme.darkBorder
+                          : LiquidTheme.lightBorder,
                     ),
                   ),
                   child: Column(
@@ -543,14 +643,20 @@ class StatsScreen extends ConsumerWidget {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.check_circle_rounded, size: 18, color: LiquidTheme.success),
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                size: 18,
+                                color: LiquidTheme.success,
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 loc.translate('stats_homework_rate'),
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                  color: isDark ? Colors.white70 : Colors.black87,
+                                  color: isDark
+                                      ? Colors.white70
+                                      : Colors.black87,
                                 ),
                               ),
                             ],
@@ -603,13 +709,17 @@ class StatsScreen extends ConsumerWidget {
                                 Flexible(
                                   flex: hwTotal - (hwCompleted + hwFailed),
                                   child: Container(
-                                    color: isDark ? const Color(0x33475569) : const Color(0x33CBD5E1),
+                                    color: isDark
+                                        ? const Color(0x33475569)
+                                        : const Color(0x33CBD5E1),
                                   ),
                                 ),
                               if (hwTotal == 0)
                                 Expanded(
                                   child: Container(
-                                    color: isDark ? const Color(0x33475569) : const Color(0x33CBD5E1),
+                                    color: isDark
+                                        ? const Color(0x33475569)
+                                        : const Color(0x33CBD5E1),
                                   ),
                                 ),
                             ],
@@ -623,18 +733,28 @@ class StatsScreen extends ConsumerWidget {
                         children: [
                           Text(
                             '$hwCompleted ${loc.translate('stats_completed')}',
-                            style: const TextStyle(fontSize: 11, color: LiquidTheme.success, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: LiquidTheme.success,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           if (hwFailed > 0)
                             Text(
                               '$hwFailed ${loc.translate('stats_failed')}',
-                              style: const TextStyle(fontSize: 11, color: LiquidTheme.danger, fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: LiquidTheme.danger,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           Text(
                             '${(hwTotal - hwCompleted - hwFailed).clamp(0, hwTotal)} ${loc.translate('stats_pending')}',
                             style: TextStyle(
                               fontSize: 11,
-                              color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                              color: isDark
+                                  ? LiquidTheme.darkTextMuted
+                                  : LiquidTheme.lightTextMuted,
                             ),
                           ),
                         ],
@@ -648,6 +768,7 @@ class StatsScreen extends ConsumerWidget {
               // Row 4: Homework study time
               _buildKpiCard(
                 isDark: isDark,
+                isPerfMode: isPerfMode,
                 icon: Icons.hourglass_top_rounded,
                 iconColor: LiquidTheme.accentLight,
                 title: loc.translate('stats_homework_time'),
@@ -670,7 +791,9 @@ class StatsScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                color: isDark ? const Color(0x1AF43F5E) : const Color(0x11F43F5E),
+                color: isDark
+                    ? const Color(0x1AF43F5E)
+                    : const Color(0x11F43F5E),
                 border: Border.all(color: const Color(0x44F43F5E)),
               ),
               child: Column(
@@ -678,7 +801,11 @@ class StatsScreen extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.cancel_rounded, size: 20, color: LiquidTheme.danger),
+                      const Icon(
+                        Icons.cancel_rounded,
+                        size: 20,
+                        color: LiquidTheme.danger,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -691,7 +818,10 @@ class StatsScreen extends ConsumerWidget {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: LiquidTheme.danger.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10),
@@ -712,21 +842,30 @@ class StatsScreen extends ConsumerWidget {
                     loc.translate('stats_failed_desc'),
                     style: TextStyle(
                       fontSize: 11,
-                      color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                      color: isDark
+                          ? LiquidTheme.darkTextMuted
+                          : LiquidTheme.lightTextMuted,
                     ),
                   ),
                   const SizedBox(height: 12),
 
                   ...failedItems.map((item) {
-                    final color = parseHexColor(item['subject_color'] ?? '#6366F1');
+                    final color = parseHexColor(
+                      item['subject_color'] ?? '#6366F1',
+                    );
                     return Container(
                       margin: const EdgeInsets.only(bottom: 6),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         color: isDark ? const Color(0x221E293B) : Colors.white,
                         border: Border.all(
-                          color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                          color: isDark
+                              ? LiquidTheme.darkBorder
+                              : LiquidTheme.lightBorder,
                         ),
                       ),
                       child: Row(
@@ -755,13 +894,18 @@ class StatsScreen extends ConsumerWidget {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
+                                color: isDark
+                                    ? LiquidTheme.darkTextSecondary
+                                    : LiquidTheme.lightTextSecondary,
                               ),
                             ),
                           ),
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: LiquidTheme.danger.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(6),
@@ -789,14 +933,23 @@ class StatsScreen extends ConsumerWidget {
         const SizedBox(height: 16),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: LiquidGlassLens(
-            style: LiquidTheme.cardStyle(isDark: isDark, radius: 20),
+          child: _buildGlassCard(
+            isDark: isDark,
+            isPerfMode: isPerfMode,
+            radius: 20,
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
+                color: isPerfMode
+                    ? (isDark
+                          ? const Color(0x381E293B)
+                          : const Color(0xB3FFFFFF))
+                    : null,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                  color: isDark
+                      ? LiquidTheme.darkBorder
+                      : LiquidTheme.lightBorder,
                 ),
               ),
               child: Column(
@@ -804,7 +957,11 @@ class StatsScreen extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.coffee_rounded, size: 20, color: LiquidTheme.success),
+                      const Icon(
+                        Icons.coffee_rounded,
+                        size: 20,
+                        color: LiquidTheme.success,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         loc.translate('breaks_and_cancellations'),
@@ -826,7 +983,9 @@ class StatsScreen extends ConsumerWidget {
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
-                            color: isDark ? const Color(0x1F334155) : const Color(0x22E2E8F0),
+                            color: isDark
+                                ? const Color(0x1F334155)
+                                : const Color(0x22E2E8F0),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -835,7 +994,9 @@ class StatsScreen extends ConsumerWidget {
                                 loc.translate('stats_breaks_duration'),
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                                  color: isDark
+                                      ? LiquidTheme.darkTextMuted
+                                      : LiquidTheme.lightTextMuted,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -859,7 +1020,9 @@ class StatsScreen extends ConsumerWidget {
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
-                            color: isDark ? const Color(0x1F334155) : const Color(0x22E2E8F0),
+                            color: isDark
+                                ? const Color(0x1F334155)
+                                : const Color(0x22E2E8F0),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -868,7 +1031,9 @@ class StatsScreen extends ConsumerWidget {
                                 loc.translate('stats_cancelled_lessons'),
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                                  color: isDark
+                                      ? LiquidTheme.darkTextMuted
+                                      : LiquidTheme.lightTextMuted,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -877,7 +1042,11 @@ class StatsScreen extends ConsumerWidget {
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  color: cancelledCount > 0 ? LiquidTheme.danger : (isDark ? Colors.white : Colors.black87),
+                                  color: cancelledCount > 0
+                                      ? LiquidTheme.danger
+                                      : (isDark
+                                            ? Colors.white
+                                            : Colors.black87),
                                 ),
                               ),
                             ],
@@ -900,11 +1069,16 @@ class StatsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     ...reasons.map((r) {
-                      final reason = r['reason'] ?? loc.translate('stats_reason_not_specified');
+                      final reason =
+                          r['reason'] ??
+                          loc.translate('stats_reason_not_specified');
                       final count = (r['count'] as num?)?.toInt() ?? 1;
                       final mins = (r['total_minutes'] as num?)?.toInt() ?? 0;
-                      final percent = cancelledCount > 0 ? (count / cancelledCount).clamp(0.0, 1.0) : 1.0;
-                      final isAlert = reason.toString().toLowerCase().contains('тривог') ||
+                      final percent = cancelledCount > 0
+                          ? (count / cancelledCount).clamp(0.0, 1.0)
+                          : 1.0;
+                      final isAlert =
+                          reason.toString().toLowerCase().contains('тривог') ||
                           reason.toString().toLowerCase().contains('alert');
 
                       return Padding(
@@ -918,9 +1092,13 @@ class StatsScreen extends ConsumerWidget {
                                 Row(
                                   children: [
                                     Icon(
-                                      isAlert ? Icons.warning_amber_rounded : Icons.info_outline_rounded,
+                                      isAlert
+                                          ? Icons.warning_amber_rounded
+                                          : Icons.info_outline_rounded,
                                       size: 13,
-                                      color: isAlert ? LiquidTheme.danger : Colors.amberAccent,
+                                      color: isAlert
+                                          ? LiquidTheme.danger
+                                          : Colors.amberAccent,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
@@ -928,7 +1106,9 @@ class StatsScreen extends ConsumerWidget {
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w500,
-                                        color: isDark ? Colors.white : Colors.black87,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.black87,
                                       ),
                                     ),
                                   ],
@@ -937,7 +1117,9 @@ class StatsScreen extends ConsumerWidget {
                                   '$count ($mins${loc.translate('minutes_short')})',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                                    color: isDark
+                                        ? LiquidTheme.darkTextMuted
+                                        : LiquidTheme.lightTextMuted,
                                   ),
                                 ),
                               ],
@@ -948,9 +1130,13 @@ class StatsScreen extends ConsumerWidget {
                               child: LinearProgressIndicator(
                                 value: percent,
                                 minHeight: 4,
-                                backgroundColor: isDark ? const Color(0x33334155) : const Color(0x33E2E8F0),
+                                backgroundColor: isDark
+                                    ? const Color(0x33334155)
+                                    : const Color(0x33E2E8F0),
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  isAlert ? LiquidTheme.danger : Colors.amberAccent,
+                                  isAlert
+                                      ? LiquidTheme.danger
+                                      : Colors.amberAccent,
                                 ),
                               ),
                             ),
@@ -974,6 +1160,7 @@ class StatsScreen extends ConsumerWidget {
     required String metricMode,
     required AppLocalizations loc,
     required bool isDark,
+    required bool isPerfMode,
   }) {
     if (subjects.isEmpty) {
       return Padding(
@@ -983,7 +1170,9 @@ class StatsScreen extends ConsumerWidget {
             loc.translate('no_data_week'),
             style: TextStyle(
               fontSize: 14,
-              color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+              color: isDark
+                  ? LiquidTheme.darkTextMuted
+                  : LiquidTheme.lightTextMuted,
             ),
           ),
         ),
@@ -999,11 +1188,16 @@ class StatsScreen extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: LiquidGlassLens(
-        style: LiquidTheme.cardStyle(isDark: isDark, radius: 22),
+      child: _buildGlassCard(
+        isDark: isDark,
+        isPerfMode: isPerfMode,
+        radius: 22,
         child: Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
+            color: isPerfMode
+                ? (isDark ? const Color(0x381E293B) : const Color(0xB3FFFFFF))
+                : null,
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
               color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
@@ -1028,7 +1222,9 @@ class StatsScreen extends ConsumerWidget {
                 final color = parseHexColor(hex);
                 final mins = (s['total_minutes'] as num?)?.toInt() ?? 0;
                 final lessonsCount = (s['lessons_count'] as num?)?.toInt() ?? 0;
-                final val = metricMode == 'time' ? mins.toDouble() : lessonsCount.toDouble();
+                final val = metricMode == 'time'
+                    ? mins.toDouble()
+                    : lessonsCount.toDouble();
                 final ratio = maxVal > 0 ? (val / maxVal).clamp(0.0, 1.0) : 0.0;
 
                 final displayValue = metricMode == 'time'
@@ -1062,13 +1258,16 @@ class StatsScreen extends ConsumerWidget {
                                   color: isDark ? Colors.white : Colors.black87,
                                 ),
                               ),
-                              if (shortName.isNotEmpty && shortName != name) ...[
+                              if (shortName.isNotEmpty &&
+                                  shortName != name) ...[
                                 const SizedBox(width: 6),
                                 Text(
                                   '($shortName)',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                                    color: isDark
+                                        ? LiquidTheme.darkTextMuted
+                                        : LiquidTheme.lightTextMuted,
                                   ),
                                 ),
                               ],
@@ -1090,7 +1289,9 @@ class StatsScreen extends ConsumerWidget {
                         child: LinearProgressIndicator(
                           value: ratio,
                           minHeight: 7,
-                          backgroundColor: isDark ? const Color(0x33334155) : const Color(0x33E2E8F0),
+                          backgroundColor: isDark
+                              ? const Color(0x33334155)
+                              : const Color(0x33E2E8F0),
                           valueColor: AlwaysStoppedAnimation<Color>(color),
                         ),
                       ),
@@ -1111,6 +1312,7 @@ class StatsScreen extends ConsumerWidget {
     required String metricMode,
     required AppLocalizations loc,
     required bool isDark,
+    required bool isPerfMode,
   }) {
     if (days.isEmpty) {
       return Padding(
@@ -1120,14 +1322,22 @@ class StatsScreen extends ConsumerWidget {
             loc.translate('no_data_week'),
             style: TextStyle(
               fontSize: 14,
-              color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+              color: isDark
+                  ? LiquidTheme.darkTextMuted
+                  : LiquidTheme.lightTextMuted,
             ),
           ),
         ),
       );
     }
 
-    final activeDays = days.where((d) => (d['day_of_week'] as num? ?? 1) <= 5 || (d['lessons_count'] as num? ?? 0) > 0).toList();
+    final activeDays = days
+        .where(
+          (d) =>
+              (d['day_of_week'] as num? ?? 1) <= 5 ||
+              (d['lessons_count'] as num? ?? 0) > 0,
+        )
+        .toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -1148,29 +1358,43 @@ class StatsScreen extends ConsumerWidget {
             final dayName = loc.translate(dayKey);
             final dateStr = day['date'] ?? '';
             final formattedDate = dateStr.isNotEmpty
-                ? DateFormat('dd.MM').format(DateTime.tryParse(dateStr) ?? DateTime.now())
+                ? DateFormat(
+                    'dd.MM',
+                  ).format(DateTime.tryParse(dateStr) ?? DateTime.now())
                 : '';
             final count = (day['lessons_count'] as num?)?.toInt() ?? 0;
             final mins = (day['total_minutes'] as num?)?.toInt() ?? 0;
             final breakMins = (day['break_minutes'] as num?)?.toInt() ?? 0;
             final hwCount = (day['homework_count'] as num?)?.toInt() ?? 0;
-            final hwCompleted = (day['homework_completed'] as num?)?.toInt() ?? 0;
+            final hwCompleted =
+                (day['homework_completed'] as num?)?.toInt() ?? 0;
             final hwFailed = (day['homework_failed'] as num?)?.toInt() ?? 0;
             final rawSubjs = day['subjects'];
             final daySubjects = (rawSubjs is List)
-                ? rawSubjs.map((e) => Map<String, dynamic>.from(e as Map)).toList()
+                ? rawSubjs
+                      .map((e) => Map<String, dynamic>.from(e as Map))
+                      .toList()
                 : <Map<String, dynamic>>[];
 
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
-              child: LiquidGlassLens(
-                style: LiquidTheme.cardStyle(isDark: isDark, radius: 18),
+              child: _buildGlassCard(
+                isDark: isDark,
+                isPerfMode: isPerfMode,
+                radius: 18,
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
+                    color: isPerfMode
+                        ? (isDark
+                              ? const Color(0x381E293B)
+                              : const Color(0xB3FFFFFF))
+                        : null,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                      color: isDark
+                          ? LiquidTheme.darkBorder
+                          : LiquidTheme.lightBorder,
                     ),
                   ),
                   child: Column(
@@ -1194,17 +1418,24 @@ class StatsScreen extends ConsumerWidget {
                                 formattedDate,
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                                  color: isDark
+                                      ? LiquidTheme.darkTextMuted
+                                      : LiquidTheme.lightTextMuted,
                                 ),
                               ),
                             ],
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: count > 0
                                   ? LiquidTheme.accent.withValues(alpha: 0.15)
-                                  : (isDark ? const Color(0x33475569) : const Color(0x33CBD5E1)),
+                                  : (isDark
+                                        ? const Color(0x33475569)
+                                        : const Color(0x33CBD5E1)),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -1214,7 +1445,9 @@ class StatsScreen extends ConsumerWidget {
                                 fontWeight: FontWeight.bold,
                                 color: count > 0
                                     ? LiquidTheme.accentLight
-                                    : (isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted),
+                                    : (isDark
+                                          ? LiquidTheme.darkTextMuted
+                                          : LiquidTheme.lightTextMuted),
                               ),
                             ),
                           ),
@@ -1226,13 +1459,19 @@ class StatsScreen extends ConsumerWidget {
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.access_time_rounded, size: 13, color: LiquidTheme.accentLight),
+                                const Icon(
+                                  Icons.access_time_rounded,
+                                  size: 13,
+                                  color: LiquidTheme.accentLight,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   '${mins ~/ 60}${loc.translate('hours_short')} ${mins % 60}${loc.translate('minutes_short')}',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: isDark ? Colors.white70 : Colors.black87,
+                                    color: isDark
+                                        ? Colors.white70
+                                        : Colors.black87,
                                   ),
                                 ),
                               ],
@@ -1241,11 +1480,18 @@ class StatsScreen extends ConsumerWidget {
                               const SizedBox(width: 14),
                               Row(
                                 children: [
-                                  const Icon(Icons.coffee_rounded, size: 13, color: LiquidTheme.success),
+                                  const Icon(
+                                    Icons.coffee_rounded,
+                                    size: 13,
+                                    color: LiquidTheme.success,
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     '$breakMins ${loc.translate('minutes_short')}',
-                                    style: const TextStyle(fontSize: 11, color: LiquidTheme.success),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: LiquidTheme.success,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -1257,21 +1503,28 @@ class StatsScreen extends ConsumerWidget {
                                   Icon(
                                     Icons.check_circle_rounded,
                                     size: 13,
-                                    color: hwCompleted == hwCount ? LiquidTheme.success : Colors.amberAccent,
+                                    color: hwCompleted == hwCount
+                                        ? LiquidTheme.success
+                                        : Colors.amberAccent,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
                                     '$hwCompleted/$hwCount',
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: isDark ? Colors.white70 : Colors.black87,
+                                      color: isDark
+                                          ? Colors.white70
+                                          : Colors.black87,
                                     ),
                                   ),
                                   if (hwFailed > 0) ...[
                                     const SizedBox(width: 4),
                                     Text(
                                       '($hwFailed не здано)',
-                                      style: const TextStyle(fontSize: 10, color: LiquidTheme.danger),
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        color: LiquidTheme.danger,
+                                      ),
                                     ),
                                   ],
                                 ],
@@ -1289,14 +1542,20 @@ class StatsScreen extends ConsumerWidget {
                             children: daySubjects.map((s) {
                               final hex = s['color_hex'] ?? '#6366F1';
                               final color = parseHexColor(hex);
-                              final subjName = s['short_name'] ?? s['name'] ?? '';
+                              final subjName =
+                                  s['short_name'] ?? s['name'] ?? '';
                               final cab = s['cabinet'];
                               return Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 3,
+                                ),
                                 decoration: BoxDecoration(
                                   color: color.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: color.withValues(alpha: 0.3)),
+                                  border: Border.all(
+                                    color: color.withValues(alpha: 0.3),
+                                  ),
                                 ),
                                 child: Text(
                                   '$subjName${cab != null ? ' ($cab)' : ''}',
@@ -1317,7 +1576,9 @@ class StatsScreen extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 11,
                             fontStyle: FontStyle.italic,
-                            color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                            color: isDark
+                                ? LiquidTheme.darkTextMuted
+                                : LiquidTheme.lightTextMuted,
                           ),
                         ),
                       ],
@@ -1334,6 +1595,7 @@ class StatsScreen extends ConsumerWidget {
 
   Widget _buildKpiCard({
     required bool isDark,
+    required bool isPerfMode,
     required IconData icon,
     required Color iconColor,
     required String title,
@@ -1341,11 +1603,16 @@ class StatsScreen extends ConsumerWidget {
     Color? valueColor,
     String? subtitle,
   }) {
-    return LiquidGlassLens(
-      style: LiquidTheme.cardStyle(isDark: isDark, radius: 18),
+    return _buildGlassCard(
+      isDark: isDark,
+      isPerfMode: isPerfMode,
+      radius: 18,
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
+          color: isPerfMode
+              ? (isDark ? const Color(0x381E293B) : const Color(0xB3FFFFFF))
+              : null,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
@@ -1365,7 +1632,9 @@ class StatsScreen extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 11,
-                      color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                      color: isDark
+                          ? LiquidTheme.darkTextMuted
+                          : LiquidTheme.lightTextMuted,
                     ),
                   ),
                 ),
@@ -1388,7 +1657,9 @@ class StatsScreen extends ConsumerWidget {
                 subtitle,
                 style: TextStyle(
                   fontSize: 10,
-                  color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                  color: isDark
+                      ? LiquidTheme.darkTextMuted
+                      : LiquidTheme.lightTextMuted,
                 ),
               ),
             ],
@@ -1414,6 +1685,25 @@ class StatsScreen extends ConsumerWidget {
           color: color,
         ),
       ),
+    );
+  }
+
+  Widget _buildGlassCard({
+    required Widget child,
+    required bool isDark,
+    required bool isPerfMode,
+    double radius = 18,
+    LiquidGlassStyle? style,
+  }) {
+    if (isPerfMode) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: child,
+      );
+    }
+    return LiquidGlassLens(
+      style: style ?? LiquidTheme.cardStyle(isDark: isDark, radius: radius),
+      child: child,
     );
   }
 }

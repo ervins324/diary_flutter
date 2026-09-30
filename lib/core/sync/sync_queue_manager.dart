@@ -45,17 +45,20 @@ class SyncQueueManager extends ChangeNotifier {
   SyncState get state => _state;
 
   SyncQueueManager(this._apiClient, [Connectivity? connectivity]) {
-    _connectivitySub = (connectivity ?? Connectivity()).onConnectivityChanged.listen(
-      (results) {
-        final hasConnection = results.any((r) => r != ConnectivityResult.none);
-        if (hasConnection) {
-          processQueue();
-        }
-      },
-      onError: (_) {
-        // Silently ignore connectivity stream errors in test/unsupported environments
-      },
-    );
+    _connectivitySub = (connectivity ?? Connectivity()).onConnectivityChanged
+        .listen(
+          (results) {
+            final hasConnection = results.any(
+              (r) => r != ConnectivityResult.none,
+            );
+            if (hasConnection) {
+              processQueue();
+            }
+          },
+          onError: (_) {
+            // Silently ignore connectivity stream errors in test/unsupported environments
+          },
+        );
     // Check initial queue count
     _updatePendingCount();
   }
@@ -94,7 +97,8 @@ class SyncQueueManager extends ChangeNotifier {
         _isProcessing = false;
         _state = _state.copyWith(
           isSyncing: false,
-          lastError: _apiClient.lastHealthCheckError ??
+          lastError:
+              _apiClient.lastHealthCheckError ??
               'Server unreachable (${_apiClient.currentBaseUrl})',
           pendingCount: HiveBoxes.getPendingSyncCount(),
         );
@@ -115,8 +119,12 @@ class SyncQueueManager extends ChangeNotifier {
                 final uploadResult = await _apiClient.uploadFile(file);
                 uploadedAttachments.add({
                   'id': uploadResult['id'],
-                  'name': uploadResult['filename'] ?? file.path.split(Platform.pathSeparator).last,
-                  'type': (uploadResult['content_type'] ?? '').contains('image') ? 'image' : 'pdf',
+                  'name':
+                      uploadResult['filename'] ??
+                      file.path.split(Platform.pathSeparator).last,
+                  'type': (uploadResult['content_type'] ?? '').contains('image')
+                      ? 'image'
+                      : 'pdf',
                   'url': uploadResult['url'],
                   'size': uploadResult['size'],
                 });
@@ -126,7 +134,10 @@ class SyncQueueManager extends ChangeNotifier {
             if (uploadedAttachments.isNotEmpty) {
               final existingAtts = payload['attachments'];
               if (existingAtts is List) {
-                payload['attachments'] = [...existingAtts, ...uploadedAttachments];
+                payload['attachments'] = [
+                  ...existingAtts,
+                  ...uploadedAttachments,
+                ];
               } else {
                 payload['attachments'] = uploadedAttachments;
               }
@@ -140,14 +151,23 @@ class SyncQueueManager extends ChangeNotifier {
             payload,
           );
 
-          if (res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 300) {
+          if (res.statusCode != null &&
+              res.statusCode! >= 200 &&
+              res.statusCode! < 300) {
             // Success: remove action from queue
             await HiveBoxes.removeSyncAction(action.id);
-          } else if (res.statusCode != null && res.statusCode! >= 400 && res.statusCode! < 500) {
+          } else if (res.statusCode != null &&
+              res.statusCode! >= 400 &&
+              res.statusCode! < 500) {
             // Client error (400/404/422): drop poison pill to prevent permanently blocked queue
-            debugPrint('Dropping invalid sync action ${action.id}: HTTP ${res.statusCode} ${res.data}');
+            debugPrint(
+              'Dropping invalid sync action ${action.id}: HTTP ${res.statusCode} ${res.data}',
+            );
             await HiveBoxes.removeSyncAction(action.id);
-            _state = _state.copyWith(lastError: 'HTTP ${res.statusCode}: ${res.data ?? res.statusMessage}');
+            _state = _state.copyWith(
+              lastError:
+                  'HTTP ${res.statusCode}: ${res.data ?? res.statusMessage}',
+            );
           } else {
             // Server error (500)
             if (action.retryCount >= 3) {
@@ -157,7 +177,9 @@ class SyncQueueManager extends ChangeNotifier {
                 action.copyWith(retryCount: action.retryCount + 1),
               );
             }
-            _state = _state.copyWith(lastError: 'Server error: HTTP ${res.statusCode}');
+            _state = _state.copyWith(
+              lastError: 'Server error: HTTP ${res.statusCode}',
+            );
           }
         } catch (e) {
           // Network interruption mid-queue: break and retry on next trigger

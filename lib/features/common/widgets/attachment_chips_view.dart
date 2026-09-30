@@ -85,10 +85,14 @@ class AttachmentChipsView extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                            color: isDark
+                                ? LiquidTheme.darkBorder
+                                : LiquidTheme.lightBorder,
                             width: 1.2,
                           ),
-                          color: isDark ? const Color(0x331E293B) : const Color(0x33E2E8F0),
+                          color: isDark
+                              ? const Color(0x331E293B)
+                              : const Color(0x33E2E8F0),
                         ),
                         clipBehavior: Clip.antiAlias,
                         child: Stack(
@@ -130,7 +134,11 @@ class AttachmentChipsView extends StatelessWidget {
                               color: LiquidTheme.danger,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.close_rounded, size: 12, color: Colors.white),
+                            child: const Icon(
+                              Icons.close_rounded,
+                              size: 12,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
@@ -150,8 +158,10 @@ class AttachmentChipsView extends StatelessWidget {
             children: nonImageAttachments.map((entry) {
               final originalIndex = entry.key;
               final att = entry.value;
-              final isPdf = att.type == 'pdf' || att.name.toLowerCase().endsWith('.pdf');
-              final isPresentation = att.type == 'presentation' ||
+              final isPdf =
+                  att.type == 'pdf' || att.name.toLowerCase().endsWith('.pdf');
+              final isPresentation =
+                  att.type == 'presentation' ||
                   att.name.toLowerCase().endsWith('.pptx') ||
                   att.name.toLowerCase().endsWith('.ppt');
               final isLink = att.type == 'link' || att.url.startsWith('http');
@@ -180,12 +190,19 @@ class AttachmentChipsView extends StatelessWidget {
                   );
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0x331E293B) : const Color(0x44CBD5E1),
+                    color: isDark
+                        ? const Color(0x331E293B)
+                        : const Color(0x44CBD5E1),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                      color: isDark
+                          ? LiquidTheme.darkBorder
+                          : LiquidTheme.lightBorder,
                     ),
                   ),
                   child: Row(
@@ -212,7 +229,9 @@ class AttachmentChipsView extends StatelessWidget {
                           sizeStr,
                           style: TextStyle(
                             fontSize: 10,
-                            color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                            color: isDark
+                                ? LiquidTheme.darkTextMuted
+                                : LiquidTheme.lightTextMuted,
                           ),
                         ),
                       ],
@@ -220,13 +239,19 @@ class AttachmentChipsView extends StatelessWidget {
                       Icon(
                         Icons.open_in_new_rounded,
                         size: 12,
-                        color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                        color: isDark
+                            ? LiquidTheme.darkTextMuted
+                            : LiquidTheme.lightTextMuted,
                       ),
                       if (onRemoveAttachment != null) ...[
                         const SizedBox(width: 4),
                         GestureDetector(
                           onTap: () => onRemoveAttachment!(originalIndex),
-                          child: const Icon(Icons.close_rounded, size: 14, color: LiquidTheme.danger),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            size: 14,
+                            color: LiquidTheme.danger,
+                          ),
                         ),
                       ],
                     ],
@@ -283,7 +308,10 @@ class AttachmentChipsView extends StatelessWidget {
           child: SizedBox(
             width: 18,
             height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2, color: LiquidTheme.accentLight),
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: LiquidTheme.accentLight,
+            ),
           ),
         );
       },

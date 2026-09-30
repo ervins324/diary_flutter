@@ -80,7 +80,9 @@ class HomeworkItem {
     List<AttachmentItem> parsedAttachments = [];
     if (rawAttachments is List) {
       parsedAttachments = rawAttachments
-          .map((a) => AttachmentItem.fromJson(Map<String, dynamic>.from(a as Map)))
+          .map(
+            (a) => AttachmentItem.fromJson(Map<String, dynamic>.from(a as Map)),
+          )
           .toList();
     }
 
@@ -92,7 +94,9 @@ class HomeworkItem {
 
     SubjectModel? parsedSubject;
     if (json['subject'] is Map) {
-      parsedSubject = SubjectModel.fromJson(Map<String, dynamic>.from(json['subject'] as Map));
+      parsedSubject = SubjectModel.fromJson(
+        Map<String, dynamic>.from(json['subject'] as Map),
+      );
     }
 
     return HomeworkItem(

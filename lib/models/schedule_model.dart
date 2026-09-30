@@ -16,7 +16,8 @@ class LessonSlot {
   final bool isOverride;
   final bool isCancelled;
   final String? overrideNote;
-  final String? eventType; // 'control_work' | 'test' | 'essay' | 'project' | null
+  final String?
+  eventType; // 'control_work' | 'test' | 'essay' | 'project' | null
   final bool isConsultation;
 
   const LessonSlot({
@@ -48,7 +49,9 @@ class LessonSlot {
     List<HomeworkItem> parsedHw = [];
     if (rawHw is List) {
       parsedHw = rawHw
-          .map((h) => HomeworkItem.fromJson(Map<String, dynamic>.from(h as Map)))
+          .map(
+            (h) => HomeworkItem.fromJson(Map<String, dynamic>.from(h as Map)),
+          )
           .toList();
     }
 
@@ -56,7 +59,10 @@ class LessonSlot {
     List<LessonNoteModel> parsedNotes = [];
     if (rawNotes is List) {
       parsedNotes = rawNotes
-          .map((n) => LessonNoteModel.fromJson(Map<String, dynamic>.from(n as Map)))
+          .map(
+            (n) =>
+                LessonNoteModel.fromJson(Map<String, dynamic>.from(n as Map)),
+          )
           .toList();
     }
 

@@ -33,7 +33,9 @@ class ApiClient {
   /// Cleans and formats raw server URLs.
   static String normalizeUrl(String raw) {
     var formatted = raw.trim();
-    if (formatted.isNotEmpty && !formatted.startsWith('http://') && !formatted.startsWith('https://')) {
+    if (formatted.isNotEmpty &&
+        !formatted.startsWith('http://') &&
+        !formatted.startsWith('https://')) {
       formatted = 'http://$formatted';
     }
     if (formatted.endsWith('/')) {
@@ -47,11 +49,15 @@ class ApiClient {
     _tailscaleBaseUrl = normalizeUrl(HiveBoxes.getTailscaleUrl());
 
     final savedActive = normalizeUrl(HiveBoxes.getActiveServerUrl());
-    if (savedActive.isNotEmpty && savedActive == _tailscaleBaseUrl && _tailscaleBaseUrl.isNotEmpty) {
+    if (savedActive.isNotEmpty &&
+        savedActive == _tailscaleBaseUrl &&
+        _tailscaleBaseUrl.isNotEmpty) {
       _activeBaseUrl = _tailscaleBaseUrl;
       _isTailscaleActive = true;
     } else {
-      _activeBaseUrl = _mainBaseUrl.isNotEmpty ? _mainBaseUrl : AppConfig.defaultServerUrl;
+      _activeBaseUrl = _mainBaseUrl.isNotEmpty
+          ? _mainBaseUrl
+          : AppConfig.defaultServerUrl;
       _isTailscaleActive = false;
     }
 
@@ -74,7 +80,8 @@ class ApiClient {
   InterceptorsWrapper _buildFailoverInterceptor() {
     return InterceptorsWrapper(
       onError: (DioException err, ErrorInterceptorHandler handler) async {
-        final isConnectionIssue = err.type == DioExceptionType.connectionTimeout ||
+        final isConnectionIssue =
+            err.type == DioExceptionType.connectionTimeout ||
             err.type == DioExceptionType.sendTimeout ||
             err.type == DioExceptionType.receiveTimeout ||
             err.type == DioExceptionType.connectionError;
@@ -152,7 +159,8 @@ class ApiClient {
   String get activeBaseUrl => _activeBaseUrl;
   String get mainBaseUrl => _mainBaseUrl;
   String get tailscaleBaseUrl => _tailscaleBaseUrl;
-  bool get isTailscaleActive => _isTailscaleActive && _tailscaleBaseUrl.isNotEmpty;
+  bool get isTailscaleActive =>
+      _isTailscaleActive && _tailscaleBaseUrl.isNotEmpty;
 
   /// Formats DioException into human-friendly explanation
   String _formatDioError(dynamic e, [String? url]) {
@@ -169,8 +177,12 @@ class ApiClient {
           return 'HTTP ${e.response?.statusCode}: ${e.response?.statusMessage ?? 'Bad response'}';
         case DioExceptionType.connectionError:
           final detail = e.error != null ? ' [${e.error}]' : '';
-          final isLocalhost = effectiveUrl.contains('localhost') || effectiveUrl.contains('127.0.0.1');
-          final localhostHint = isLocalhost ? ' (On mobile use PC LAN IP, not localhost)' : '';
+          final isLocalhost =
+              effectiveUrl.contains('localhost') ||
+              effectiveUrl.contains('127.0.0.1');
+          final localhostHint = isLocalhost
+              ? ' (On mobile use PC LAN IP, not localhost)'
+              : '';
           return 'Cannot connect to $effectiveUrl$detail$localhostHint';
         case DioExceptionType.cancel:
           return 'Request cancelled';
@@ -198,7 +210,9 @@ class ApiClient {
           validateStatus: (status) => status != null && status < 500,
         ),
       );
-      if (res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 400) {
+      if (res.statusCode != null &&
+          res.statusCode! >= 200 &&
+          res.statusCode! < 400) {
         return true;
       }
     } catch (e) {
@@ -219,7 +233,9 @@ class ApiClient {
           validateStatus: (status) => status != null && status < 500,
         ),
       );
-      if (res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 400) {
+      if (res.statusCode != null &&
+          res.statusCode! >= 200 &&
+          res.statusCode! < 400) {
         lastHealthCheckError = null;
         return true;
       }
@@ -261,7 +277,8 @@ class ApiClient {
       return true;
     }
 
-    final mainErr = lastHealthCheckError ?? 'Main server unreachable ($_mainBaseUrl)';
+    final mainErr =
+        lastHealthCheckError ?? 'Main server unreachable ($_mainBaseUrl)';
 
     // 2. If primary failed, attempt Tailscale Tailnet fallback
     if (_tailscaleBaseUrl.isNotEmpty && _tailscaleBaseUrl != _mainBaseUrl) {
@@ -271,7 +288,8 @@ class ApiClient {
         lastHealthCheckError = null;
         return true;
       }
-      lastHealthCheckError = '$mainErr\nFallback: ${lastHealthCheckError ?? "Tailscale unreachable"}';
+      lastHealthCheckError =
+          '$mainErr\nFallback: ${lastHealthCheckError ?? "Tailscale unreachable"}';
       return false;
     }
 
@@ -280,13 +298,13 @@ class ApiClient {
   }
 
   // ── Schedule ──────────────────────────────────────────────────
-  Future<List<DaySchedule>> getScheduleRange(String startDate, String endDate) async {
+  Future<List<DaySchedule>> getScheduleRange(
+    String startDate,
+    String endDate,
+  ) async {
     final response = await _dio.get(
       '${AppConfig.apiPrefix}/schedule',
-      queryParameters: {
-        'start_date': startDate,
-        'end_date': endDate,
-      },
+      queryParameters: {'start_date': startDate, 'end_date': endDate},
     );
     if (response.data is List) {
       return (response.data as List)
@@ -297,7 +315,10 @@ class ApiClient {
   }
 
   // ── Homework ──────────────────────────────────────────────────
-  Future<List<HomeworkItem>> getHomeworkList({String? status, String? date}) async {
+  Future<List<HomeworkItem>> getHomeworkList({
+    String? status,
+    String? date,
+  }) async {
     final params = <String, dynamic>{};
     if (status != null) params['status'] = status;
     if (date != null) params['date'] = date;
@@ -308,20 +329,35 @@ class ApiClient {
     );
     if (response.data is List) {
       return (response.data as List)
-          .map((h) => HomeworkItem.fromJson(Map<String, dynamic>.from(h as Map)))
+          .map(
+            (h) => HomeworkItem.fromJson(Map<String, dynamic>.from(h as Map)),
+          )
           .toList();
     }
     return [];
   }
 
   Future<HomeworkItem> createHomework(Map<String, dynamic> data) async {
-    final response = await _dio.post('${AppConfig.apiPrefix}/homework', data: data);
-    return HomeworkItem.fromJson(Map<String, dynamic>.from(response.data as Map));
+    final response = await _dio.post(
+      '${AppConfig.apiPrefix}/homework',
+      data: data,
+    );
+    return HomeworkItem.fromJson(
+      Map<String, dynamic>.from(response.data as Map),
+    );
   }
 
-  Future<HomeworkItem> updateHomework(String id, Map<String, dynamic> data) async {
-    final response = await _dio.patch('${AppConfig.apiPrefix}/homework/$id', data: data);
-    return HomeworkItem.fromJson(Map<String, dynamic>.from(response.data as Map));
+  Future<HomeworkItem> updateHomework(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await _dio.patch(
+      '${AppConfig.apiPrefix}/homework/$id',
+      data: data,
+    );
+    return HomeworkItem.fromJson(
+      Map<String, dynamic>.from(response.data as Map),
+    );
   }
 
   Future<void> deleteHomework(String id) async {
@@ -333,20 +369,35 @@ class ApiClient {
     final response = await _dio.get('${AppConfig.apiPrefix}/subjects');
     if (response.data is List) {
       return (response.data as List)
-          .map((s) => SubjectModel.fromJson(Map<String, dynamic>.from(s as Map)))
+          .map(
+            (s) => SubjectModel.fromJson(Map<String, dynamic>.from(s as Map)),
+          )
           .toList();
     }
     return [];
   }
 
   Future<SubjectModel> createSubject(Map<String, dynamic> data) async {
-    final response = await _dio.post('${AppConfig.apiPrefix}/subjects', data: data);
-    return SubjectModel.fromJson(Map<String, dynamic>.from(response.data as Map));
+    final response = await _dio.post(
+      '${AppConfig.apiPrefix}/subjects',
+      data: data,
+    );
+    return SubjectModel.fromJson(
+      Map<String, dynamic>.from(response.data as Map),
+    );
   }
 
-  Future<SubjectModel> updateSubject(String id, Map<String, dynamic> data) async {
-    final response = await _dio.patch('${AppConfig.apiPrefix}/subjects/$id', data: data);
-    return SubjectModel.fromJson(Map<String, dynamic>.from(response.data as Map));
+  Future<SubjectModel> updateSubject(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await _dio.patch(
+      '${AppConfig.apiPrefix}/subjects/$id',
+      data: data,
+    );
+    return SubjectModel.fromJson(
+      Map<String, dynamic>.from(response.data as Map),
+    );
   }
 
   Future<void> deleteSubject(String id) async {
@@ -358,27 +409,36 @@ class ApiClient {
     final response = await _dio.get('${AppConfig.apiPrefix}/bells');
     if (response.data is List) {
       return (response.data as List)
-          .map((b) => BellSlotModel.fromJson(Map<String, dynamic>.from(b as Map)))
+          .map(
+            (b) => BellSlotModel.fromJson(Map<String, dynamic>.from(b as Map)),
+          )
           .toList();
     }
     return [];
   }
 
-  Future<List<BellSlotModel>> saveBellsBulk(List<Map<String, dynamic>> slots) async {
+  Future<List<BellSlotModel>> saveBellsBulk(
+    List<Map<String, dynamic>> slots,
+  ) async {
     final response = await _dio.post(
       '${AppConfig.apiPrefix}/bells/bulk',
       data: {'slots': slots},
     );
     if (response.data is List) {
       return (response.data as List)
-          .map((b) => BellSlotModel.fromJson(Map<String, dynamic>.from(b as Map)))
+          .map(
+            (b) => BellSlotModel.fromJson(Map<String, dynamic>.from(b as Map)),
+          )
           .toList();
     }
     return [];
   }
 
   // ── Lesson Notes ──────────────────────────────────────────────
-  Future<List<LessonNoteModel>> getLessonNotes({String? date, String? subjectId}) async {
+  Future<List<LessonNoteModel>> getLessonNotes({
+    String? date,
+    String? subjectId,
+  }) async {
     final params = <String, dynamic>{};
     if (date != null) params['date'] = date;
     if (subjectId != null) params['subject_id'] = subjectId;
@@ -389,20 +449,36 @@ class ApiClient {
     );
     if (response.data is List) {
       return (response.data as List)
-          .map((n) => LessonNoteModel.fromJson(Map<String, dynamic>.from(n as Map)))
+          .map(
+            (n) =>
+                LessonNoteModel.fromJson(Map<String, dynamic>.from(n as Map)),
+          )
           .toList();
     }
     return [];
   }
 
   Future<LessonNoteModel> createLessonNote(Map<String, dynamic> data) async {
-    final response = await _dio.post('${AppConfig.apiPrefix}/lesson-notes', data: data);
-    return LessonNoteModel.fromJson(Map<String, dynamic>.from(response.data as Map));
+    final response = await _dio.post(
+      '${AppConfig.apiPrefix}/lesson-notes',
+      data: data,
+    );
+    return LessonNoteModel.fromJson(
+      Map<String, dynamic>.from(response.data as Map),
+    );
   }
 
-  Future<LessonNoteModel> updateLessonNote(String id, Map<String, dynamic> data) async {
-    final response = await _dio.patch('${AppConfig.apiPrefix}/lesson-notes/$id', data: data);
-    return LessonNoteModel.fromJson(Map<String, dynamic>.from(response.data as Map));
+  Future<LessonNoteModel> updateLessonNote(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await _dio.patch(
+      '${AppConfig.apiPrefix}/lesson-notes/$id',
+      data: data,
+    );
+    return LessonNoteModel.fromJson(
+      Map<String, dynamic>.from(response.data as Map),
+    );
   }
 
   Future<void> deleteLessonNote(String id) async {
@@ -414,14 +490,19 @@ class ApiClient {
     final response = await _dio.get('${AppConfig.apiPrefix}/holidays');
     if (response.data is List) {
       return (response.data as List)
-          .map((h) => HolidayModel.fromJson(Map<String, dynamic>.from(h as Map)))
+          .map(
+            (h) => HolidayModel.fromJson(Map<String, dynamic>.from(h as Map)),
+          )
           .toList();
     }
     return [];
   }
 
   // ── Statistics ────────────────────────────────────────────────
-  Future<Map<String, dynamic>> getWeeklyStats(String dateStr, {String mode = 'actual'}) async {
+  Future<Map<String, dynamic>> getWeeklyStats(
+    String dateStr, {
+    String mode = 'actual',
+  }) async {
     final response = await _dio.get(
       '${AppConfig.apiPrefix}/stats/weekly',
       queryParameters: {'date': dateStr, 'mode': mode},
@@ -444,12 +525,16 @@ class ApiClient {
   }
 
   // ── Generic Request for Sync Queue ─────────────────────────────
-  Future<Response> executeRaw(String method, String endpoint, dynamic data) async {
+  Future<Response> executeRaw(
+    String method,
+    String endpoint,
+    dynamic data,
+  ) async {
     var effectiveMethod = method.toUpperCase();
     if (effectiveMethod == 'PUT' &&
         (endpoint.contains('/homework') ||
-         endpoint.contains('/lesson-notes') ||
-         endpoint.contains('/subjects'))) {
+            endpoint.contains('/lesson-notes') ||
+            endpoint.contains('/subjects'))) {
       effectiveMethod = 'PATCH';
     }
 

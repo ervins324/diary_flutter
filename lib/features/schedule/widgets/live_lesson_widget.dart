@@ -7,6 +7,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/liquid_theme.dart';
 import '../../../models/schedule_model.dart';
 import '../../../providers/schedule_provider.dart';
+import '../../../providers/settings_provider.dart';
 
 /// Live lesson status widget displaying current ongoing lesson or break countdown.
 class LiveLessonWidget extends ConsumerStatefulWidget {
@@ -86,10 +87,9 @@ class _LiveLessonWidgetState extends ConsumerState<LiveLessonWidget> {
           ),
         );
 
-        final lessons = todaySchedule.lessons
-            .where((l) => !l.isCancelled)
-            .toList()
-          ..sort((a, b) => a.lessonOrder.compareTo(b.lessonOrder));
+        final lessons =
+            todaySchedule.lessons.where((l) => !l.isCancelled).toList()
+              ..sort((a, b) => a.lessonOrder.compareTo(b.lessonOrder));
 
         if (lessons.isEmpty) {
           return const SizedBox.shrink();
@@ -111,7 +111,10 @@ class _LiveLessonWidgetState extends ConsumerState<LiveLessonWidget> {
             remainingMinutes = endMin - currentMinutes;
             final duration = endMin - startMin;
             if (duration > 0) {
-              progress = ((currentMinutes - startMin) / duration).clamp(0.0, 1.0);
+              progress = ((currentMinutes - startMin) / duration).clamp(
+                0.0,
+                1.0,
+              );
             }
             if (i + 1 < lessons.length) {
               nextLesson = lessons[i + 1];
@@ -120,7 +123,10 @@ class _LiveLessonWidgetState extends ConsumerState<LiveLessonWidget> {
           } else if (currentMinutes < startMin) {
             if (nextLesson == null) {
               nextLesson = l;
-              isBreak = (i > 0 && currentMinutes >= _parseTimeToMinutes(lessons[i - 1].endTime));
+              isBreak =
+                  (i > 0 &&
+                  currentMinutes >=
+                      _parseTimeToMinutes(lessons[i - 1].endTime));
               remainingMinutes = startMin - currentMinutes;
             }
           }
@@ -131,140 +137,166 @@ class _LiveLessonWidgetState extends ConsumerState<LiveLessonWidget> {
           return const SizedBox.shrink();
         }
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: LiquidGlassLens(
-            style: LiquidTheme.cardStyle(isDark: isDark, radius: 22),
-            child: Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+        final isPerfMode = ref.watch(performanceModeProvider);
+
+        final cardContent = Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: isPerfMode
+                ? (isDark ? const Color(0x381E293B) : const Color(0xB3FFFFFF))
+                : null,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: ongoingLesson != null
-                              ? LiquidTheme.success.withValues(alpha: 0.2)
-                              : LiquidTheme.accent.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: ongoingLesson != null
+                          ? LiquidTheme.success.withValues(alpha: 0.2)
+                          : LiquidTheme.accent.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: ongoingLesson != null
+                                ? LiquidTheme.success
+                                : LiquidTheme.accentLight,
+                          ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 7,
-                              height: 7,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: ongoingLesson != null
-                                    ? LiquidTheme.success
-                                    : LiquidTheme.accentLight,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              ongoingLesson != null
-                                  ? loc.translate('ongoing')
-                                  : (isBreak
-                                      ? loc.translate('break_now')
-                                      : loc.translate('upcoming')),
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: ongoingLesson != null
-                                    ? LiquidTheme.success
-                                    : LiquidTheme.accentLight,
-                              ),
-                            ),
-                          ],
+                        const SizedBox(width: 6),
+                        Text(
+                          ongoingLesson != null
+                              ? loc.translate('ongoing')
+                              : (isBreak
+                                    ? loc.translate('break_now')
+                                    : loc.translate('upcoming')),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: ongoingLesson != null
+                                ? LiquidTheme.success
+                                : LiquidTheme.accentLight,
+                          ),
                         ),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '$remainingMinutes ${loc.translate('minutes')}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? LiquidTheme.darkTextSecondary
+                          : LiquidTheme.lightTextSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Ongoing lesson info
+              if (ongoingLesson != null) ...[
+                Row(
+                  children: [
+                    Text(
+                      ongoingLesson.subject.name,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black87,
                       ),
-                      const Spacer(),
-                      Text(
-                        '$remainingMinutes ${loc.translate('minutes')}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                    ),
+                    if (ongoingLesson.cabinet != null) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
                           color: isDark
-                              ? LiquidTheme.darkTextSecondary
-                              : LiquidTheme.lightTextSecondary,
+                              ? const Color(0x33475569)
+                              : const Color(0x33CBD5E1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '${loc.translate('cab')} ${ongoingLesson.cabinet}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? Colors.white70 : Colors.black87,
+                          ),
                         ),
                       ),
                     ],
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // Progress bar
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 5,
+                    backgroundColor: isDark
+                        ? const Color(0x33334155)
+                        : const Color(0x33E2E8F0),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      LiquidTheme.accent,
+                    ),
                   ),
-                  const SizedBox(height: 10),
+                ),
+              ],
 
-                  // Ongoing lesson info
-                  if (ongoingLesson != null) ...[
-                    Row(
-                      children: [
-                        Text(
-                          ongoingLesson.subject.name,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.black87,
-                          ),
-                        ),
-                        if (ongoingLesson.cabinet != null) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: isDark ? const Color(0x33475569) : const Color(0x33CBD5E1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '${loc.translate('cab')} ${ongoingLesson.cabinet}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark ? Colors.white70 : Colors.black87,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Progress bar
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 5,
-                        backgroundColor: isDark ? const Color(0x33334155) : const Color(0x33E2E8F0),
-                        valueColor: const AlwaysStoppedAnimation<Color>(LiquidTheme.accent),
-                      ),
-                    ),
-                  ],
-
-                  // Next lesson hint
-                  if (nextLesson != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      '${loc.translate('upcoming')}: ${nextLesson.subject.name} (${nextLesson.startTime})',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? LiquidTheme.darkTextMuted
-                            : LiquidTheme.lightTextMuted,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+              // Next lesson hint
+              if (nextLesson != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '${loc.translate('upcoming')}: ${nextLesson.subject.name} (${nextLesson.startTime})',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark
+                        ? LiquidTheme.darkTextMuted
+                        : LiquidTheme.lightTextMuted,
+                  ),
+                ),
+              ],
+            ],
           ),
+        );
+
+        final wrappedCard = isPerfMode
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: cardContent,
+              )
+            : LiquidGlassLens(
+                style: LiquidTheme.cardStyle(isDark: isDark, radius: 22),
+                child: cardContent,
+              );
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: wrappedCard,
         );
       },
       loading: () => const SizedBox.shrink(),

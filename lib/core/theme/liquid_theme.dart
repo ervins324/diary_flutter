@@ -30,12 +30,17 @@ class LiquidTheme {
   static final Map<String, LiquidGlassStyle> _styleCache = {};
 
   /// Predefined LiquidGlassStyle for primary cards (lessons, homework, notes)
-  static LiquidGlassStyle cardStyle({bool isDark = true, double radius = 20.0}) {
+  static LiquidGlassStyle cardStyle({
+    bool isDark = true,
+    double radius = 20.0,
+  }) {
     final key = 'card_${isDark}_$radius';
     return _styleCache.putIfAbsent(
       key,
       () => LiquidGlassStyle(
-        shape: LiquidGlassShape.continuousRoundedRectangle(cornerRadius: radius),
+        shape: LiquidGlassShape.continuousRoundedRectangle(
+          cornerRadius: radius,
+        ),
         appearance: LiquidGlassAppearance(
           color: isDark ? const Color(0x281E293B) : const Color(0x60FFFFFF),
           blur: const LiquidGlassBlur(sigmaX: 6.0, sigmaY: 6.0),
@@ -46,12 +51,17 @@ class LiquidTheme {
   }
 
   /// Predefined LiquidGlassStyle for small badges, chips, and pills
-  static LiquidGlassStyle pillStyle({bool isDark = true, double radius = 12.0}) {
+  static LiquidGlassStyle pillStyle({
+    bool isDark = true,
+    double radius = 12.0,
+  }) {
     final key = 'pill_${isDark}_$radius';
     return _styleCache.putIfAbsent(
       key,
       () => LiquidGlassStyle(
-        shape: LiquidGlassShape.continuousRoundedRectangle(cornerRadius: radius),
+        shape: LiquidGlassShape.continuousRoundedRectangle(
+          cornerRadius: radius,
+        ),
         appearance: LiquidGlassAppearance(
           color: isDark ? const Color(0x33334155) : const Color(0x66E2E8F0),
           blur: const LiquidGlassBlur(sigmaX: 4.0, sigmaY: 4.0),
@@ -67,7 +77,9 @@ class LiquidTheme {
     return _styleCache.putIfAbsent(
       key,
       () => LiquidGlassStyle(
-        shape: const LiquidGlassShape.continuousRoundedRectangle(cornerRadius: 32.0),
+        shape: const LiquidGlassShape.continuousRoundedRectangle(
+          cornerRadius: 32.0,
+        ),
         appearance: LiquidGlassAppearance(
           color: isDark ? const Color(0x550F172A) : const Color(0x80FFFFFF),
           blur: const LiquidGlassBlur(sigmaX: 7.0, sigmaY: 7.0),

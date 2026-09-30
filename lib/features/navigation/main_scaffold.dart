@@ -13,6 +13,7 @@ import '../notes/notes_screen.dart';
 import '../schedule/schedule_screen.dart';
 import '../settings/settings_screen.dart';
 import '../stats/stats_screen.dart';
+import '../../providers/settings_provider.dart';
 
 final selectedTabIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -23,6 +24,7 @@ class MainScaffold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(selectedTabIndexProvider);
+    final isPerfMode = ref.watch(performanceModeProvider);
     final loc = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -34,55 +36,68 @@ class MainScaffold extends ConsumerWidget {
       SettingsScreen(),
     ];
 
+    final bodyContent = SafeArea(
+      bottom: false,
+      child: Column(
+        children: [
+          // Top floating app bar
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
+            child: Row(
+              children: [
+                Text(
+                  loc.translate('app_title'),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const Spacer(),
+
+                // Isolated sync & connection status badge (doesn't trigger full scaffold rebuild)
+                const _ConnectionSyncBadge(),
+              ],
+            ),
+          ),
+
+          // Air Raid Alert Banner
+          const AirRaidBanner(),
+
+          // Active tab screen (Lazy loading so only visited tabs are mounted)
+          Expanded(
+            child: LazyIndexedStack(index: currentIndex, children: pages),
+          ),
+        ],
+      ),
+    );
+
     return Scaffold(
       extendBody: true,
-      body: LiquidGlassView(
-        pixelRatio: 0.6,
-        refreshRate: LiquidGlassRefreshRate.medium,
-        backgroundWidget: AmbientBackground(
-          isDark: isDark,
-          child: const SizedBox.expand(),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              // Top floating app bar
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Row(
-                  children: [
-                    Text(
-                      loc.translate('app_title'),
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                        color: isDark ? Colors.white : Colors.black87,
-                      ),
-                    ),
-                    const Spacer(),
-
-                    // Isolated sync & connection status badge (doesn't trigger full scaffold rebuild)
-                    const _ConnectionSyncBadge(),
-                  ],
+      body: isPerfMode
+          ? Stack(
+              fit: StackFit.expand,
+              children: [
+                AmbientBackground(
+                  isDark: isDark,
+                  child: const SizedBox.expand(),
                 ),
+                bodyContent,
+              ],
+            )
+          : LiquidGlassView(
+              pixelRatio: 0.6,
+              refreshRate: LiquidGlassRefreshRate.medium,
+              backgroundWidget: AmbientBackground(
+                isDark: isDark,
+                child: const SizedBox.expand(),
               ),
-
-              // Air Raid Alert Banner
-              const AirRaidBanner(),
-
-              // Active tab screen (Lazy loading so only visited tabs are mounted)
-              Expanded(
-                child: LazyIndexedStack(
-                  index: currentIndex,
-                  children: pages,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+              child: bodyContent,
+            ),
 
       // Floating Liquid Glass Bottom Navigation Bar
       bottomNavigationBar: _BottomGlassNavBar(
@@ -111,14 +126,14 @@ class _ConnectionSyncBadge extends ConsumerWidget {
 
     final statusText = autoSyncState.isSyncing
         ? loc.translate('syncing')
-        : (isConnected
-            ? (isTailscale ? 'TAILSCALE' : 'ONLINE')
-            : 'OFFLINE');
+        : (isConnected ? (isTailscale ? 'TAILSCALE' : 'ONLINE') : 'OFFLINE');
 
     return GestureDetector(
       onTap: () async {
         if (autoSyncState.isSyncing) return;
-        final ok = await ref.read(autoSyncProvider.notifier).syncAll(isManual: true);
+        final ok = await ref
+            .read(autoSyncProvider.notifier)
+            .syncAll(isManual: true);
         if (context.mounted) {
           final currentError = ref.read(autoSyncProvider).lastError;
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -131,7 +146,9 @@ class _ConnectionSyncBadge extends ConsumerWidget {
               ),
               duration: const Duration(seconds: 3),
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           );
         }
@@ -142,9 +159,7 @@ class _ConnectionSyncBadge extends ConsumerWidget {
         decoration: BoxDecoration(
           color: badgeColor.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: badgeColor.withValues(alpha: 0.4),
-          ),
+          border: Border.all(color: badgeColor.withValues(alpha: 0.4)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -206,85 +221,101 @@ class _BottomGlassNavBar extends ConsumerWidget {
   final int currentIndex;
   final bool isDark;
 
-  const _BottomGlassNavBar({
-    required this.currentIndex,
-    required this.isDark,
-  });
+  const _BottomGlassNavBar({required this.currentIndex, required this.isDark});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isPerfMode = ref.watch(performanceModeProvider);
     final loc = AppLocalizations.of(context);
+
+    final navContent = Container(
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: isPerfMode
+            ? (isDark ? const Color(0xE60F172A) : const Color(0xEBFFFFFF))
+            : null,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(
+          color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+        ),
+        boxShadow: isPerfMode
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildNavItem(
+              ref: ref,
+              index: 0,
+              icon: Icons.calendar_today_rounded,
+              label: loc.translate('nav_schedule'),
+              isSelected: currentIndex == 0,
+              isDark: isDark,
+            ),
+          ),
+          Expanded(
+            child: _buildNavItem(
+              ref: ref,
+              index: 1,
+              icon: Icons.assignment_rounded,
+              label: loc.translate('nav_homework'),
+              isSelected: currentIndex == 1,
+              isDark: isDark,
+            ),
+          ),
+          Expanded(
+            child: _buildNavItem(
+              ref: ref,
+              index: 2,
+              icon: Icons.edit_note_rounded,
+              label: loc.translate('nav_notes'),
+              isSelected: currentIndex == 2,
+              isDark: isDark,
+            ),
+          ),
+          Expanded(
+            child: _buildNavItem(
+              ref: ref,
+              index: 3,
+              icon: Icons.bar_chart_rounded,
+              label: loc.translate('nav_stats'),
+              isSelected: currentIndex == 3,
+              isDark: isDark,
+            ),
+          ),
+          Expanded(
+            child: _buildNavItem(
+              ref: ref,
+              index: 4,
+              icon: Icons.settings_rounded,
+              label: loc.translate('nav_settings'),
+              isSelected: currentIndex == 4,
+              isDark: isDark,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final wrappedNav = isPerfMode
+        ? ClipRRect(borderRadius: BorderRadius.circular(32), child: navContent)
+        : LiquidGlassLens(
+            style: LiquidTheme.navBarStyle(isDark: isDark),
+            child: navContent,
+          );
 
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        child: LiquidGlassLens(
-          style: LiquidTheme.navBarStyle(isDark: isDark),
-          child: Container(
-            height: 64,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(32),
-              border: Border.all(
-                color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildNavItem(
-                    ref: ref,
-                    index: 0,
-                    icon: Icons.calendar_today_rounded,
-                    label: loc.translate('nav_schedule'),
-                    isSelected: currentIndex == 0,
-                    isDark: isDark,
-                  ),
-                ),
-                Expanded(
-                  child: _buildNavItem(
-                    ref: ref,
-                    index: 1,
-                    icon: Icons.assignment_rounded,
-                    label: loc.translate('nav_homework'),
-                    isSelected: currentIndex == 1,
-                    isDark: isDark,
-                  ),
-                ),
-                Expanded(
-                  child: _buildNavItem(
-                    ref: ref,
-                    index: 2,
-                    icon: Icons.edit_note_rounded,
-                    label: loc.translate('nav_notes'),
-                    isSelected: currentIndex == 2,
-                    isDark: isDark,
-                  ),
-                ),
-                Expanded(
-                  child: _buildNavItem(
-                    ref: ref,
-                    index: 3,
-                    icon: Icons.bar_chart_rounded,
-                    label: loc.translate('nav_stats'),
-                    isSelected: currentIndex == 3,
-                    isDark: isDark,
-                  ),
-                ),
-                Expanded(
-                  child: _buildNavItem(
-                    ref: ref,
-                    index: 4,
-                    icon: Icons.settings_rounded,
-                    label: loc.translate('nav_settings'),
-                    isSelected: currentIndex == 4,
-                    isDark: isDark,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        child: wrappedNav,
       ),
     );
   }
@@ -320,7 +351,9 @@ class _BottomGlassNavBar extends ConsumerWidget {
               size: 20,
               color: isSelected
                   ? LiquidTheme.accentLight
-                  : (isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted),
+                  : (isDark
+                        ? LiquidTheme.darkTextMuted
+                        : LiquidTheme.lightTextMuted),
             ),
             const SizedBox(height: 3),
             FittedBox(
@@ -333,7 +366,9 @@ class _BottomGlassNavBar extends ConsumerWidget {
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   color: isSelected
                       ? LiquidTheme.accentLight
-                      : (isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted),
+                      : (isDark
+                            ? LiquidTheme.darkTextMuted
+                            : LiquidTheme.lightTextMuted),
                 ),
               ),
             ),

@@ -31,6 +31,7 @@ class HomeworkScreen extends ConsumerWidget {
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 70.0),
         child: FloatingActionButton(
+          heroTag: 'homework_fab',
           onPressed: () {
             showModalBottomSheet(
               context: context,
@@ -41,7 +42,9 @@ class HomeworkScreen extends ConsumerWidget {
           },
           backgroundColor: LiquidTheme.accent,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
           child: const Icon(Icons.add_rounded, size: 28),
         ),
       ),
@@ -52,78 +55,109 @@ class HomeworkScreen extends ConsumerWidget {
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-            // Filter chips header
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildFilterChip(context, ref, 'pending', loc.translate('pending'), activeFilter),
-                      const SizedBox(width: 8),
-                      _buildFilterChip(context, ref, 'completed', loc.translate('completed'), activeFilter),
-                      const SizedBox(width: 8),
-                      _buildFilterChip(context, ref, 'failed', loc.translate('failed'), activeFilter),
-                      const SizedBox(width: 8),
-                      _buildFilterChip(context, ref, 'all', loc.translate('all'), activeFilter),
-                    ],
+              // Filter chips header
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 12.0,
                   ),
-                ),
-              ),
-            ),
-
-            // Empty state or list
-            if (filtered.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.task_alt_rounded,
-                        size: 52,
-                        color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        loc.translate('no_homework'),
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildFilterChip(
+                          context,
+                          ref,
+                          'pending',
+                          loc.translate('pending'),
+                          activeFilter,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        _buildFilterChip(
+                          context,
+                          ref,
+                          'completed',
+                          loc.translate('completed'),
+                          activeFilter,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildFilterChip(
+                          context,
+                          ref,
+                          'failed',
+                          loc.translate('failed'),
+                          activeFilter,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildFilterChip(
+                          context,
+                          ref,
+                          'all',
+                          loc.translate('all'),
+                          activeFilter,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              )
-            else
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final item = filtered[index];
-                    return HomeworkCard(key: ValueKey(item.id), item: item);
-                  },
-                  findChildIndexCallback: (Key key) {
-                    if (key is ValueKey<String>) {
-                      final idx = filtered.indexWhere((h) => h.id == key.value);
-                      return idx >= 0 ? idx : null;
-                    }
-                    return null;
-                  },
-                  childCount: filtered.length,
                 ),
               ),
 
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 80),
-            ),
-          ],
+              // Empty state or list
+              if (filtered.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.task_alt_rounded,
+                          size: 52,
+                          color: isDark
+                              ? LiquidTheme.darkTextMuted
+                              : LiquidTheme.lightTextMuted,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          loc.translate('no_homework'),
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: isDark
+                                ? LiquidTheme.darkTextSecondary
+                                : LiquidTheme.lightTextSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final item = filtered[index];
+                      return HomeworkCard(key: ValueKey(item.id), item: item);
+                    },
+                    findChildIndexCallback: (Key key) {
+                      if (key is ValueKey<String>) {
+                        final idx = filtered.indexWhere(
+                          (h) => h.id == key.value,
+                        );
+                        return idx >= 0 ? idx : null;
+                      }
+                      return null;
+                    },
+                    childCount: filtered.length,
+                  ),
+                ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 80)),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _buildFilterChip(
@@ -142,12 +176,16 @@ class HomeworkScreen extends ConsumerWidget {
         style: TextStyle(
           fontSize: 13,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+          color: isSelected
+              ? Colors.white
+              : (isDark ? Colors.white70 : Colors.black87),
         ),
       ),
       selected: isSelected,
       selectedColor: LiquidTheme.accent,
-      backgroundColor: isDark ? const Color(0x26334155) : const Color(0x33CBD5E1),
+      backgroundColor: isDark
+          ? const Color(0x26334155)
+          : const Color(0x33CBD5E1),
       side: BorderSide.none,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onSelected: (_) {

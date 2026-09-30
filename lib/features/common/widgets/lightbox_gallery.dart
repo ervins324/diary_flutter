@@ -61,7 +61,10 @@ class AttachmentHelper {
         lower.endsWith('.bmp');
   }
 
-  static Future<void> openFileOrUrl(String rawUrl, {String? localFilePath}) async {
+  static Future<void> openFileOrUrl(
+    String rawUrl, {
+    String? localFilePath,
+  }) async {
     try {
       if (localFilePath != null && File(localFilePath).existsSync()) {
         final uri = Uri.file(localFilePath);
@@ -94,7 +97,11 @@ class LightboxGallery extends StatefulWidget {
     this.initialIndex = 0,
   });
 
-  static void show(BuildContext context, {required List<String> images, int initialIndex = 0}) {
+  static void show(
+    BuildContext context, {
+    required List<String> images,
+    int initialIndex = 0,
+  }) {
     if (images.isEmpty) return;
     Navigator.of(context).push(
       PageRouteBuilder(
@@ -118,7 +125,8 @@ class _LightboxGalleryState extends State<LightboxGallery>
     with SingleTickerProviderStateMixin {
   late int _currentIndex;
   late final PageController _pageController;
-  final TransformationController _transformController = TransformationController();
+  final TransformationController _transformController =
+      TransformationController();
   TapDownDetails? _doubleTapDetails;
   late AnimationController _animController;
   Animation<Matrix4>? _zoomAnimation;
@@ -133,15 +141,16 @@ class _LightboxGalleryState extends State<LightboxGallery>
     _scaleNotifier = ValueNotifier<double>(1.0);
     _isZoomedNotifier = ValueNotifier<bool>(false);
 
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 250),
-    )..addListener(() {
-        if (_zoomAnimation != null) {
-          _transformController.value = _zoomAnimation!.value;
-          _updateScale();
-        }
-      });
+    _animController =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 250),
+        )..addListener(() {
+          if (_zoomAnimation != null) {
+            _transformController.value = _zoomAnimation!.value;
+            _updateScale();
+          }
+        });
 
     _transformController.addListener(_updateScale);
   }
@@ -183,12 +192,13 @@ class _LightboxGalleryState extends State<LightboxGallery>
 
   void _zoomTo(double targetScale) {
     final currentMatrix = _transformController.value;
-    final targetMatrix = Matrix4.identity()..scaleByDouble(targetScale, targetScale, 1.0, 1.0);
+    final targetMatrix = Matrix4.identity()
+      ..scaleByDouble(targetScale, targetScale, 1.0, 1.0);
 
-    _zoomAnimation = Matrix4Tween(
-      begin: currentMatrix,
-      end: targetMatrix,
-    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic));
+    _zoomAnimation = Matrix4Tween(begin: currentMatrix, end: targetMatrix)
+        .animate(
+          CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
+        );
 
     _animController.forward(from: 0);
   }
@@ -202,10 +212,16 @@ class _LightboxGalleryState extends State<LightboxGallery>
         ..translateByDouble(-position.dx * 1.5, -position.dy * 1.5, 0.0, 1.0)
         ..scaleByDouble(2.5, 2.5, 1.0, 1.0);
 
-      _zoomAnimation = Matrix4Tween(
-        begin: _transformController.value,
-        end: targetMatrix,
-      ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic));
+      _zoomAnimation =
+          Matrix4Tween(
+            begin: _transformController.value,
+            end: targetMatrix,
+          ).animate(
+            CurvedAnimation(
+              parent: _animController,
+              curve: Curves.easeOutCubic,
+            ),
+          );
 
       _animController.forward(from: 0);
     }
@@ -246,8 +262,9 @@ class _LightboxGalleryState extends State<LightboxGallery>
                       final rawUrl = widget.images[index];
                       return Center(
                         child: InteractiveViewer(
-                          transformationController:
-                              index == _currentIndex ? _transformController : null,
+                          transformationController: index == _currentIndex
+                              ? _transformController
+                              : null,
                           minScale: 0.8,
                           maxScale: 4.5,
                           clipBehavior: Clip.none,
@@ -270,7 +287,10 @@ class _LightboxGalleryState extends State<LightboxGallery>
                   // Image Counter badge
                   if (total > 1)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(16),
@@ -306,14 +326,19 @@ class _LightboxGalleryState extends State<LightboxGallery>
                               icon: const Icon(Icons.remove_rounded, size: 18),
                               color: Colors.white,
                               disabledColor: Colors.white30,
-                              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                              constraints: const BoxConstraints(
+                                minWidth: 36,
+                                minHeight: 36,
+                              ),
                               padding: EdgeInsets.zero,
                               tooltip: 'Zoom out',
                             ),
                             GestureDetector(
                               onTap: _resetZoom,
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                ),
                                 child: Text(
                                   '${(scale * 100).round()}%',
                                   style: const TextStyle(
@@ -329,7 +354,10 @@ class _LightboxGalleryState extends State<LightboxGallery>
                               icon: const Icon(Icons.add_rounded, size: 18),
                               color: Colors.white,
                               disabledColor: Colors.white30,
-                              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                              constraints: const BoxConstraints(
+                                minWidth: 36,
+                                minHeight: 36,
+                              ),
                               padding: EdgeInsets.zero,
                               tooltip: 'Zoom in',
                             ),
@@ -351,8 +379,15 @@ class _LightboxGalleryState extends State<LightboxGallery>
                       onPressed: () {
                         AttachmentHelper.openFileOrUrl(currentUrl);
                       },
-                      icon: const Icon(Icons.open_in_browser_rounded, size: 18, color: Colors.white),
-                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      icon: const Icon(
+                        Icons.open_in_browser_rounded,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 36,
+                        minHeight: 36,
+                      ),
                       padding: EdgeInsets.zero,
                       tooltip: 'Open in external viewer',
                     ),
@@ -368,8 +403,15 @@ class _LightboxGalleryState extends State<LightboxGallery>
                     ),
                     child: IconButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close_rounded, size: 20, color: Colors.white),
-                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 20,
+                        color: Colors.white,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 36,
+                        minHeight: 36,
+                      ),
                       padding: EdgeInsets.zero,
                       tooltip: 'Close',
                     ),

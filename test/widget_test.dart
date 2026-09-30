@@ -25,10 +25,16 @@ class FakeApiClient extends ApiClient {
   Future<bool> checkHealth() async => true;
 
   @override
-  Future<List<DaySchedule>> getScheduleRange(String startDate, String endDate) async => [];
+  Future<List<DaySchedule>> getScheduleRange(
+    String startDate,
+    String endDate,
+  ) async => [];
 
   @override
-  Future<List<HomeworkItem>> getHomeworkList({String? status, String? date}) async => [];
+  Future<List<HomeworkItem>> getHomeworkList({
+    String? status,
+    String? date,
+  }) async => [];
 
   @override
   Future<List<SubjectModel>> getSubjects() async => [];
@@ -37,13 +43,19 @@ class FakeApiClient extends ApiClient {
   Future<List<BellSlotModel>> getBells() async => [];
 
   @override
-  Future<List<LessonNoteModel>> getLessonNotes({String? date, String? subjectId}) async => [];
+  Future<List<LessonNoteModel>> getLessonNotes({
+    String? date,
+    String? subjectId,
+  }) async => [];
 
   @override
   Future<List<HolidayModel>> getHolidays() async => [];
 
   @override
-  Future<Map<String, dynamic>> getWeeklyStats(String dateStr, {String mode = 'actual'}) async => {
+  Future<Map<String, dynamic>> getWeeklyStats(
+    String dateStr, {
+    String mode = 'actual',
+  }) async => {
     'total_lessons': 0,
     'total_minutes': 0,
     'study_time_display': '0h 0m',
@@ -65,8 +77,10 @@ class FakeApiClient extends ApiClient {
   };
 }
 
-class FakeAutoSyncNotifier extends StateNotifier<AutoSyncState> implements AutoSyncService {
-  FakeAutoSyncNotifier() : super(const AutoSyncState(isAutoSyncEnabled: false, isOnline: true));
+class FakeAutoSyncNotifier extends StateNotifier<AutoSyncState>
+    implements AutoSyncService {
+  FakeAutoSyncNotifier()
+    : super(const AutoSyncState(isAutoSyncEnabled: false, isOnline: true));
 
   @override
   Future<bool> syncAll({bool isManual = false}) async => true;
@@ -84,14 +98,14 @@ void main() {
   setUpAll(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('dev.fluttercommunity.plus/connectivity_status'),
-      (call) async => null,
-    );
+          const MethodChannel('dev.fluttercommunity.plus/connectivity_status'),
+          (call) async => null,
+        );
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('dev.fluttercommunity.plus/connectivity'),
-      (call) async => ['wifi'],
-    );
+          const MethodChannel('dev.fluttercommunity.plus/connectivity'),
+          (call) async => ['wifi'],
+        );
   });
 
   testWidgets('DiaryApp basic smoke test', (WidgetTester tester) async {
@@ -109,9 +123,7 @@ void main() {
             airRaidAlertProvider.overrideWith(
               (ref) => AirRaidAlertNotifier(autoStart: false),
             ),
-            autoSyncProvider.overrideWith(
-              (ref) => FakeAutoSyncNotifier(),
-            ),
+            autoSyncProvider.overrideWith((ref) => FakeAutoSyncNotifier()),
           ],
           child: const DiaryApp(),
         ),

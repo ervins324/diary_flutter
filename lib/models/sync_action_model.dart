@@ -34,7 +34,8 @@ class SyncAction {
       httpMethod: json['httpMethod']?.toString() ?? 'POST',
       payload: Map<String, dynamic>.from(json['payload'] as Map? ?? {}),
       localFilePaths: parsedFiles,
-      createdAt: json['createdAt']?.toString() ?? DateTime.now().toIso8601String(),
+      createdAt:
+          json['createdAt']?.toString() ?? DateTime.now().toIso8601String(),
       retryCount: (json['retryCount'] as num?)?.toInt() ?? 0,
     );
   }

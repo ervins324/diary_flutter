@@ -48,7 +48,8 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
     );
 
     if (widget.preselectedDate != null) {
-      _selectedDueDate = DateTime.tryParse(widget.preselectedDate!) ??
+      _selectedDueDate =
+          DateTime.tryParse(widget.preselectedDate!) ??
           DateTime.now().add(const Duration(days: 1));
     } else {
       _selectedDueDate = DateTime.now().add(const Duration(days: 1));
@@ -70,7 +71,8 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
       if (xFile != null) {
         // Stage locally in app storage so it's available offline
         final appDir = await getApplicationDocumentsDirectory();
-        final fileName = 'hw_${DateTime.now().millisecondsSinceEpoch}_${xFile.name}';
+        final fileName =
+            'hw_${DateTime.now().millisecondsSinceEpoch}_${xFile.name}';
         final localFile = File('${appDir.path}/$fileName');
         await File(xFile.path).copy(localFile.path);
 
@@ -87,7 +89,8 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
       if (res.isNotEmpty && res.first.path != null) {
         final path = res.first.path!;
         final appDir = await getApplicationDocumentsDirectory();
-        final fileName = 'doc_${DateTime.now().millisecondsSinceEpoch}_${res.first.name}';
+        final fileName =
+            'doc_${DateTime.now().millisecondsSinceEpoch}_${res.first.name}';
         final localFile = File('${appDir.path}/$fileName');
         await File(path).copy(localFile.path);
 
@@ -102,14 +105,17 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
     final text = _textController.text.trim();
     final subjects = ref.read(subjectsProvider);
     final subjectToSave = _selectedSubject != null
-        ? (subjects.where((s) => s.id == _selectedSubject!.id).firstOrNull ?? _selectedSubject)
+        ? (subjects.where((s) => s.id == _selectedSubject!.id).firstOrNull ??
+              _selectedSubject)
         : (subjects.isNotEmpty ? subjects.first : null);
     if (text.isEmpty || subjectToSave == null) return;
 
     final dueDateStr = DateFormat('yyyy-MM-dd').format(_selectedDueDate);
     final order = int.tryParse(_orderController.text.trim());
 
-    ref.read(homeworkListProvider.notifier).addHomework(
+    ref
+        .read(homeworkListProvider.notifier)
+        .addHomework(
           subjectId: subjectToSave.id,
           dueDate: dueDateStr,
           lessonOrder: order,
@@ -130,7 +136,7 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
     // Safely resolve the selected subject against the available subjects list
     final currentSubject = _selectedSubject != null && subjects.isNotEmpty
         ? (subjects.where((s) => s.id == _selectedSubject!.id).firstOrNull ??
-            subjects.first)
+              subjects.first)
         : (subjects.isNotEmpty ? subjects.first : null);
 
     return Container(
@@ -154,7 +160,9 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0x4094A3B8) : const Color(0x4064748B),
+                  color: isDark
+                      ? const Color(0x4094A3B8)
+                      : const Color(0x4064748B),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -178,18 +186,26 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
               decoration: InputDecoration(
                 labelText: loc.translate('subjects'),
                 labelStyle: TextStyle(
-                  color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
+                  color: isDark
+                      ? LiquidTheme.darkTextSecondary
+                      : LiquidTheme.lightTextSecondary,
                 ),
                 filled: true,
-                fillColor: isDark ? const Color(0x1F334155) : const Color(0x22E2E8F0),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                fillColor: isDark
+                    ? const Color(0x1F334155)
+                    : const Color(0x22E2E8F0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
               items: subjects.map((s) {
                 return DropdownMenuItem<SubjectModel>(
                   value: s,
                   child: Text(
                     s.name,
-                    style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
                   ),
                 );
               }).toList(),
@@ -214,17 +230,28 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
                       }
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 15,
+                      ),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0x1F334155) : const Color(0x22E2E8F0),
+                        color: isDark
+                            ? const Color(0x1F334155)
+                            : const Color(0x22E2E8F0),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                          color: isDark
+                              ? LiquidTheme.darkBorder
+                              : LiquidTheme.lightBorder,
                         ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_today_rounded, size: 16, color: LiquidTheme.accentLight),
+                          const Icon(
+                            Icons.calendar_today_rounded,
+                            size: 16,
+                            color: LiquidTheme.accentLight,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             DateFormat('yyyy-MM-dd').format(_selectedDueDate),
@@ -244,15 +271,23 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
                   child: TextField(
                     controller: _orderController,
                     keyboardType: TextInputType.number,
-                    style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
                     decoration: InputDecoration(
                       labelText: '#',
                       labelStyle: TextStyle(
-                        color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
+                        color: isDark
+                            ? LiquidTheme.darkTextSecondary
+                            : LiquidTheme.lightTextSecondary,
                       ),
                       filled: true,
-                      fillColor: isDark ? const Color(0x1F334155) : const Color(0x22E2E8F0),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      fillColor: isDark
+                          ? const Color(0x1F334155)
+                          : const Color(0x22E2E8F0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                   ),
                 ),
@@ -268,11 +303,17 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
               decoration: InputDecoration(
                 hintText: loc.translate('homework'),
                 hintStyle: TextStyle(
-                  color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                  color: isDark
+                      ? LiquidTheme.darkTextMuted
+                      : LiquidTheme.lightTextMuted,
                 ),
                 filled: true,
-                fillColor: isDark ? const Color(0x1F334155) : const Color(0x22E2E8F0),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                fillColor: isDark
+                    ? const Color(0x1F334155)
+                    : const Color(0x22E2E8F0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -281,28 +322,40 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
             if (_stagedFiles.isNotEmpty) ...[
               AttachmentChipsView(
                 images: _stagedFiles
-                    .where((p) => AttachmentHelper.isImageAttachment('image', p))
+                    .where(
+                      (p) => AttachmentHelper.isImageAttachment('image', p),
+                    )
                     .toList(),
                 attachments: _stagedFiles
-                    .where((p) => !AttachmentHelper.isImageAttachment('image', p))
-                    .map((p) => AttachmentItem(
-                          name: p.split(Platform.pathSeparator).last,
-                          type: p.toLowerCase().endsWith('.pdf') ? 'pdf' : 'presentation',
-                          url: p,
-                          localFilePath: p,
-                        ))
+                    .where(
+                      (p) => !AttachmentHelper.isImageAttachment('image', p),
+                    )
+                    .map(
+                      (p) => AttachmentItem(
+                        name: p.split(Platform.pathSeparator).last,
+                        type: p.toLowerCase().endsWith('.pdf')
+                            ? 'pdf'
+                            : 'presentation',
+                        url: p,
+                        localFilePath: p,
+                      ),
+                    )
                     .toList(),
                 isDark: isDark,
                 onRemoveImage: (idx) {
                   final imgList = _stagedFiles
-                      .where((p) => AttachmentHelper.isImageAttachment('image', p))
+                      .where(
+                        (p) => AttachmentHelper.isImageAttachment('image', p),
+                      )
                       .toList();
                   final target = imgList[idx];
                   setState(() => _stagedFiles.remove(target));
                 },
                 onRemoveAttachment: (idx) {
                   final docList = _stagedFiles
-                      .where((p) => !AttachmentHelper.isImageAttachment('image', p))
+                      .where(
+                        (p) => !AttachmentHelper.isImageAttachment('image', p),
+                      )
                       .toList();
                   final target = docList[idx];
                   setState(() => _stagedFiles.remove(target));
@@ -320,7 +373,9 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
                   label: Text(loc.translate('camera')),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: LiquidTheme.accentLight,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -330,7 +385,9 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
                   label: Text(loc.translate('gallery')),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: LiquidTheme.accentLight,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -349,12 +406,17 @@ class _HomeworkFormDialogState extends ConsumerState<HomeworkFormDialog> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: LiquidTheme.accent,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: Text(
                 loc.translate('save'),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
           ],

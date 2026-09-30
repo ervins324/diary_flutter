@@ -21,7 +21,8 @@ class ServerConnectionNotifier extends StateNotifier<ConnectionStatus> {
   final ApiClient _apiClient;
   final Ref _ref;
 
-  ServerConnectionNotifier(this._apiClient, this._ref) : super(ConnectionStatus.unknown) {
+  ServerConnectionNotifier(this._apiClient, this._ref)
+    : super(ConnectionStatus.unknown) {
     checkConnection();
   }
 
@@ -29,8 +30,10 @@ class ServerConnectionNotifier extends StateNotifier<ConnectionStatus> {
     state = ConnectionStatus.checking;
     final ok = await _apiClient.checkHealth();
     state = ok ? ConnectionStatus.connected : ConnectionStatus.offline;
-    _ref.read(activeServerUrlProvider.notifier).state = _apiClient.activeBaseUrl;
-    _ref.read(isTailscaleActiveProvider.notifier).state = _apiClient.isTailscaleActive;
+    _ref.read(activeServerUrlProvider.notifier).state =
+        _apiClient.activeBaseUrl;
+    _ref.read(isTailscaleActiveProvider.notifier).state =
+        _apiClient.isTailscaleActive;
     return ok;
   }
 
@@ -46,7 +49,8 @@ class ServerConnectionNotifier extends StateNotifier<ConnectionStatus> {
       _ref.read(serverUrlProvider.notifier).state = _apiClient.mainBaseUrl;
     }
     if (tailscaleUrl != null) {
-      _ref.read(tailscaleUrlProvider.notifier).state = _apiClient.tailscaleBaseUrl;
+      _ref.read(tailscaleUrlProvider.notifier).state =
+          _apiClient.tailscaleBaseUrl;
     }
     checkConnection();
   }
@@ -54,9 +58,9 @@ class ServerConnectionNotifier extends StateNotifier<ConnectionStatus> {
 
 final serverConnectionProvider =
     StateNotifierProvider<ServerConnectionNotifier, ConnectionStatus>((ref) {
-  final api = ref.watch(apiClientProvider);
-  return ServerConnectionNotifier(api, ref);
-});
+      final api = ref.watch(apiClientProvider);
+      return ServerConnectionNotifier(api, ref);
+    });
 
 /// Current configured primary server URL provider
 final serverUrlProvider = StateProvider<String>((ref) {

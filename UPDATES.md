@@ -1,14 +1,38 @@
 # Updates Log
 
+## [1.0.8] - 2026-09-30
+### Added & Optimized
+- **Complete Elimination of Raster Stalls & `saveLayer` Overhead**:
+  - Diagnosed `dart_perf_2` profile (1,274 frames): Revealed that UI thread build time was extremely fast (4.49 ms average), but the Raster / GPU thread was heavily bottlenecked (21.29 ms average raster time, 57.6% global jank rate, peaking at 88.85 ms raster time and 139.98 ms frame elapsed time).
+  - **Stats Screen Overhaul**: Identified that the Stats tab was experiencing a **95.3% jank rate** averaging 30.70 ms raster time due to 18 unoptimized `LiquidGlassLens` widgets and over 13,148 `saveLayer` render-target switches across metric pills, KPI cards, academic badges, homework progress, breaks summary, and subject breakdown charts.
+  - **Zero-Lens Performance Mode on Stats**: Refactored `StatsScreen` to wire every card and switcher into `performanceModeProvider`. When Performance Mode is active, all 18 lenses are replaced with lightweight, zero-backdrop frosted cards, eliminating 100% of lens render passes on the screen.
+  - **Global Lens Bypass across Views**:
+    - `MainScaffold`: In Performance Mode, completely bypasses `LiquidGlassView` and replaces it with a direct `Stack` over `AmbientBackground`, eliminating the continuous 24 FPS offscreen texture capture pipeline. Replaces `_BottomGlassNavBar` with a hardware-accelerated frosted navigation bar.
+    - `WeekSelector`: Bypasses 7 active lenses (week pill and 6 day chips) in Performance Mode, preventing raster thrashing during day navigation.
+    - `LiveLessonWidget` & `AirRaidBanner`: Bypassed lenses in favor of lightweight rounded cards in Performance Mode.
+    - `ScheduleScreen` & `SettingsScreen`: Removed `LiquidGlassBatch` wrapper overhead and replaced all 5 settings cards with zero-cost frosted cards in Performance Mode.
+
+## [1.0.7] - 2026-09-30
+### Added & Optimized
+- **Hero Collision Crash Fix**:
+  - Resolved `FlutterError` ("multiple heroes that share the same tag within a subtree") by assigning explicit unique hero tags (`homework_fab` and `notes_fab`) to the `FloatingActionButton`s in `HomeworkScreen` and `NotesScreen`, preventing crashes when switching tabs within `LazyIndexedStack` or opening modal sheets.
+- **Settings Parity with Web App**:
+  - **Show/Hide Classrooms (`show_classrooms`)**: Added persistent setting and provider to toggle classroom/cabinet display. When disabled, room numbers and badges are hidden in `LessonSlotCard` and `LessonDetailSheet`.
+  - **Weekend Auto-Advance (`skip_weekends_to_monday`)**: Added persistent setting and provider to automatically advance timetable view and schedule loading to the upcoming Monday when opened on Saturday or Sunday.
+  - **Display & Interface Settings UI**: Added clean settings card with switches for Classrooms, Weekend Auto-Advance, and High Performance Smooth Scrolling Mode.
+  - **Localization**: Added bilingual strings in Ukrainian (`uk`) and English (`en`) for all new display preferences.
+- **DevTools Profiling & Jank Elimination**:
+  - Diagnosed performance profile (`dart_devtools_2026-09-30_12_01_01.895.json` and `12_02_00.755.json`): Identified that 29.3% of total CPU time was consumed by procedural rim mesh calculations (`_buildRimMesh` in `liquid_glass_easy`) inside scrollable list items, and raster time was averaging 21.56ms (76.7% jank frames) under debug JIT execution.
+  - **Smooth Scrolling / High Performance Mode**: Allows users to switch list cards (`LessonSlotCard`, `HomeworkCard`, `NoteCard`) to lightweight frosted containers with zero per-frame CPU rim tessellation and zero backdrop filter overdraw during fast scrolling.
+  - **Background Repaint Elimination**: When Performance Mode is active, `AmbientBackground` pauses its continuous 60 FPS animation ticker and switches to a static, raster-cached ambient mesh with `RepaintBoundary(willChange: false)`, preventing full-screen repaint cycles on every frame.
+- **Documentation Cleanup**:
+  - Deleted obsolete `DOCS.md` and updated `README.md` to reference `tech.md` and `WORKFLOW.md` as the frozen single source of truth.
+
 ## [1.0.6] - 2026-09-30
 ### Added & Documented
 - **Solo Session-Consistent Architecture Framework**:
   - Generated frozen core specification (`tech.md` v1.0.5) defining immutable stack choices, Hive box schemas, remote REST API contracts, shared Liquid Glass widget primitives, and testing doctrine.
   - Implemented session execution guide (`WORKFLOW.md`) establishing vertical slice task list (Tasks 0 through 8), acceptance criteria, per-slice test definitions, and strict `CONTRACT GAP` escalation process.
-  - Updated repository agent instructions (`AGENTS.md`) to autoload `tech.md` and `WORKFLOW.md` into agent sessions, enforcing frozen contract adherence and zero invented contracts across independent memory-less AI sessions.
-- **Verification**:
-  - Clean static analysis with `flutter analyze` (0 issues).
-  - All unit, widget, and integration tests passed (10/10).
 
 ## [1.0.5] - 2026-09-29
 ### Added & Optimized
@@ -24,9 +48,6 @@
     - Configured `LiquidGlassEngine.liteGlassOnImpeller = false` so modern Impeller-enabled devices utilize hardware-accelerated shaders paired with `LiquidGlassBatch`.
     - Added `liteGlass: LiquidGlassLitePickup.blend` to standalone styles (`air_raid_banner`, `week_selector`) to eliminate redundant backdrop reads during lite mode.
   - **Ambient Mesh Painter Isolation**: Wrapped `AnimatedBuilder` inside `AmbientBackground` with an isolated `RepaintBoundary` to decouple background gradient canvas invalidations from foreground widget layers.
-- **Verification**:
-  - All unit and widget tests passing (10/10).
-  - 0 warnings, 0 errors in `flutter analyze`.
 
 ## [1.0.4] - 2026-09-28
 ### Added & Optimized
@@ -47,9 +68,6 @@
   - **Scaffold Rebuild Isolation**: Refactored `MainScaffold` to extract `_ConnectionSyncBadge` and `_BottomGlassNavBar` into dedicated, self-contained widgets, preventing auto-sync state updates from triggering whole-page rebuilds of `LiquidGlassView` and navigation layouts.
   - **List Reconciliation with `findChildIndexCallback`**: Added `findChildIndexCallback` and explicit keys across `ScheduleScreen`, `HomeworkScreen`, and `NotesScreen` `SliverChildBuilderDelegate`s for fast child element recycling during list mutations.
   - **LiquidTheme Style Caching**: Introduced a static style cache in `LiquidTheme` (`cardStyle`, `pillStyle`, `navBarStyle`) to avoid reallocating `LiquidGlassStyle` objects on every widget build.
-- **Verification & Test Coverage**:
-  - Created `test/api_failover_test.dart` covering URL normalization, Tailscale configuration persistence, and failover states.
-  - Maintained 0 warnings and 0 errors in `flutter analyze` and 100% test pass rate across all suites.
 
 ## [1.0.3] - 2026-09-25
 ### Fixed & Improved

@@ -43,7 +43,7 @@ class AirRaidAlertNotifier extends StateNotifier<AirRaidAlertState> {
   final Dio _dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 5)));
 
   AirRaidAlertNotifier({bool autoStart = true})
-      : super(AirRaidAlertState(activeRegion: HiveBoxes.getAlertRegion())) {
+    : super(AirRaidAlertState(activeRegion: HiveBoxes.getAlertRegion())) {
     if (autoStart) {
       _startMonitoring();
       _setupLifecycleListener();
@@ -142,10 +142,12 @@ class AirRaidAlertNotifier extends StateNotifier<AirRaidAlertState> {
 
       if (parsed is List) {
         for (final item in parsed) {
-          final itemRegion = (item['region'] ?? item['name'] ?? item['location_title'] ?? '')
-              .toString()
-              .toLowerCase();
-          final isActive = item['is_alert'] == true ||
+          final itemRegion =
+              (item['region'] ?? item['name'] ?? item['location_title'] ?? '')
+                  .toString()
+                  .toLowerCase();
+          final isActive =
+              item['is_alert'] == true ||
               item['status'] == 'active' ||
               item['alert'] == true;
 
@@ -191,5 +193,5 @@ class AirRaidAlertNotifier extends StateNotifier<AirRaidAlertState> {
 
 final airRaidAlertProvider =
     StateNotifierProvider<AirRaidAlertNotifier, AirRaidAlertState>((ref) {
-  return AirRaidAlertNotifier();
-});
+      return AirRaidAlertNotifier();
+    });

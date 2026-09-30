@@ -27,7 +27,10 @@ class NotesNotifier extends StateNotifier<List<LessonNoteModel>> {
   Future<void> fetchRemote() async {
     try {
       final remote = await _apiClient.getLessonNotes();
-      final pendingIds = state.where((n) => n.isPendingSync).map((n) => n.id).toSet();
+      final pendingIds = state
+          .where((n) => n.isPendingSync)
+          .map((n) => n.id)
+          .toSet();
       final merged = <LessonNoteModel>[];
 
       for (final item in remote) {
@@ -76,7 +79,8 @@ class NotesNotifier extends StateNotifier<List<LessonNoteModel>> {
       updatedAt: DateTime.now().toIso8601String(),
     );
 
-    final updated = [newNote, ...state]..sort((a, b) => b.date.compareTo(a.date));
+    final updated = [newNote, ...state]
+      ..sort((a, b) => b.date.compareTo(a.date));
     state = updated;
     await HiveBoxes.saveNote(newNote);
 
@@ -140,7 +144,7 @@ class NotesNotifier extends StateNotifier<List<LessonNoteModel>> {
 
 final notesListProvider =
     StateNotifierProvider<NotesNotifier, List<LessonNoteModel>>((ref) {
-  final api = ref.watch(apiClientProvider);
-  final queue = ref.read(syncQueueProvider);
-  return NotesNotifier(api, queue);
-});
+      final api = ref.watch(apiClientProvider);
+      final queue = ref.read(syncQueueProvider);
+      return NotesNotifier(api, queue);
+    });

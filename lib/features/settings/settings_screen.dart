@@ -58,538 +58,783 @@ class SettingsScreen extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
     final themeMode = ref.watch(themeModeProvider);
     final alertState = ref.watch(airRaidAlertProvider);
+    final showClassrooms = ref.watch(showClassroomsProvider);
+    final skipWeekends = ref.watch(skipWeekendsProvider);
+    final performanceMode = ref.watch(performanceModeProvider);
     final loc = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return LiquidGlassBatch(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+    final scrollView = SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           // ── Server Connection Card ────────────────────────────
-          LiquidGlassLens(
-            style: LiquidTheme.cardStyle(isDark: isDark, radius: 22),
-            child: Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: isTailscaleActive
-                              ? Colors.purple.withValues(alpha: 0.2)
-                              : LiquidTheme.accent.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          isTailscaleActive ? Icons.vpn_lock_rounded : Icons.dns_rounded,
-                          size: 20,
-                          color: isTailscaleActive ? Colors.purpleAccent : LiquidTheme.accentLight,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              loc.translate('server_connection'),
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${loc.translate('primary_server')}: $serverUrl',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
-                              ),
-                            ),
-                            if (tailscaleUrl.isNotEmpty) ...[
-                              const SizedBox(height: 1),
-                              Text(
-                                '${loc.translate('fallback_server')}: $tailscaleUrl',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-
-                      // Status indicator dot
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: connStatus == ConnectionStatus.connected
-                              ? (isTailscaleActive ? Colors.purpleAccent : LiquidTheme.success)
-                              : (connStatus == ConnectionStatus.checking
-                                  ? LiquidTheme.warning
-                                  : LiquidTheme.danger),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // Tailscale Active badge if fallback in use
-                  if (connStatus == ConnectionStatus.connected && isTailscaleActive) ...[
-                    const SizedBox(height: 10),
+          _buildSettingsCard(
+            isDark: isDark,
+            isPerfMode: performanceMode,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.purple.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.purpleAccent.withValues(alpha: 0.3)),
+                        color: isTailscaleActive
+                            ? Colors.purple.withValues(alpha: 0.2)
+                            : LiquidTheme.accent.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                      child: Icon(
+                        isTailscaleActive
+                            ? Icons.vpn_lock_rounded
+                            : Icons.dns_rounded,
+                        size: 20,
+                        color: isTailscaleActive
+                            ? Colors.purpleAccent
+                            : LiquidTheme.accentLight,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.alt_route_rounded, size: 14, color: Colors.purpleAccent),
-                          const SizedBox(width: 6),
                           Text(
-                            loc.translate('tailscale_active'),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.purpleAccent,
-                              fontWeight: FontWeight.w600,
+                            loc.translate('server_connection'),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black87,
                             ),
                           ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${loc.translate('primary_server')}: $serverUrl',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? LiquidTheme.darkTextSecondary
+                                  : LiquidTheme.lightTextSecondary,
+                            ),
+                          ),
+                          if (tailscaleUrl.isNotEmpty) ...[
+                            const SizedBox(height: 1),
+                            Text(
+                              '${loc.translate('fallback_server')}: $tailscaleUrl',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark
+                                    ? LiquidTheme.darkTextMuted
+                                    : LiquidTheme.lightTextMuted,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
+
+                    // Status indicator dot
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: connStatus == ConnectionStatus.connected
+                            ? (isTailscaleActive
+                                  ? Colors.purpleAccent
+                                  : LiquidTheme.success)
+                            : (connStatus == ConnectionStatus.checking
+                                  ? LiquidTheme.warning
+                                  : LiquidTheme.danger),
+                      ),
+                    ),
                   ],
+                ),
 
-                  const SizedBox(height: 16),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const ServerSetupScreen(),
-                              ),
-                            );
-                          },
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: isDark ? Colors.white : Colors.black87,
-                            side: BorderSide(
-                              color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
-                            ),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: Text(loc.translate('edit')),
-                        ),
+                // Tailscale Active badge if fallback in use
+                if (connStatus == ConnectionStatus.connected &&
+                    isTailscaleActive) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.purpleAccent.withValues(alpha: 0.3),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            ref.read(serverConnectionProvider.notifier).checkConnection();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: LiquidTheme.accent,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: Text(loc.translate('test_connection')),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.alt_route_rounded,
+                          size: 14,
+                          color: Colors.purpleAccent,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 6),
+                        Text(
+                          loc.translate('tailscale_active'),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.purpleAccent,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
-              ),
+
+                const SizedBox(height: 16),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ServerSetupScreen(),
+                            ),
+                          );
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isDark
+                              ? Colors.white
+                              : Colors.black87,
+                          side: BorderSide(
+                            color: isDark
+                                ? LiquidTheme.darkBorder
+                                : LiquidTheme.lightBorder,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(loc.translate('edit')),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          ref
+                              .read(serverConnectionProvider.notifier)
+                              .checkConnection();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: LiquidTheme.accent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(loc.translate('test_connection')),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
 
           // ── Sync Queue Diagnostics Card ───────────────────────
-          LiquidGlassLens(
-            style: LiquidTheme.cardStyle(isDark: isDark, radius: 22),
-            child: Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: LiquidTheme.success.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.sync_rounded, size: 20, color: LiquidTheme.success),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              loc.translate('sync_status'),
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              isSyncing
-                                  ? loc.translate('syncing')
-                                  : '${loc.translate('pending_sync')}: $pendingCount',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      if (isSyncing)
-                        const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: LiquidTheme.accentLight),
-                        )
-                      else
-                        OutlinedButton(
-                          onPressed: () async {
-                            final success = await ref.read(autoSyncProvider.notifier).syncAll(isManual: true);
-                            if (context.mounted) {
-                              final currentErr = ref.read(autoSyncProvider).lastError ??
-                                  ref.read(syncQueueProvider).state.lastError;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    success
-                                        ? loc.translate('sync_success')
-                                        : '${loc.translate('sync_failed')}: ${currentErr ?? 'Server unreachable'}',
-                                  ),
-                                  backgroundColor: success ? LiquidTheme.success : LiquidTheme.danger,
-                                  duration: const Duration(seconds: 4),
-                                ),
-                              );
-                            }
-                          },
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            side: const BorderSide(color: LiquidTheme.accentLight),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                          child: Text(
-                            loc.translate('sync_now'),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: LiquidTheme.accentLight,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-
-                  // Error notification banner if sync failed
-                  if (lastError != null) ...[
-                    const SizedBox(height: 12),
+          _buildSettingsCard(
+            isDark: isDark,
+            isPerfMode: performanceMode,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: LiquidTheme.danger.withValues(alpha: 0.12),
+                        color: LiquidTheme.success.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: LiquidTheme.danger.withValues(alpha: 0.3)),
                       ),
-                      child: Row(
+                      child: const Icon(
+                        Icons.sync_rounded,
+                        size: 20,
+                        color: LiquidTheme.success,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.error_outline_rounded, size: 16, color: LiquidTheme.danger),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              lastError,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 11, color: LiquidTheme.danger),
+                          Text(
+                            loc.translate('sync_status'),
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            isSyncing
+                                ? loc.translate('syncing')
+                                : '${loc.translate('pending_sync')}: $pendingCount',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? LiquidTheme.darkTextSecondary
+                                  : LiquidTheme.lightTextSecondary,
                             ),
                           ),
                         ],
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    if (isSyncing)
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: LiquidTheme.accentLight,
+                        ),
+                      )
+                    else
+                      OutlinedButton(
+                        onPressed: () async {
+                          final success = await ref
+                              .read(autoSyncProvider.notifier)
+                              .syncAll(isManual: true);
+                          if (context.mounted) {
+                            final currentErr =
+                                ref.read(autoSyncProvider).lastError ??
+                                ref.read(syncQueueProvider).state.lastError;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  success
+                                      ? loc.translate('sync_success')
+                                      : '${loc.translate('sync_failed')}: ${currentErr ?? 'Server unreachable'}',
+                                ),
+                                backgroundColor: success
+                                    ? LiquidTheme.success
+                                    : LiquidTheme.danger,
+                                duration: const Duration(seconds: 4),
+                              ),
+                            );
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          side: const BorderSide(
+                            color: LiquidTheme.accentLight,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Text(
+                          loc.translate('sync_now'),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: LiquidTheme.accentLight,
+                          ),
+                        ),
+                      ),
                   ],
+                ),
 
-                  const Divider(height: 24),
+                // Error notification banner if sync failed
+                if (lastError != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: LiquidTheme.danger.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: LiquidTheme.danger.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.error_outline_rounded,
+                          size: 16,
+                          color: LiquidTheme.danger,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            lastError,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: LiquidTheme.danger,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
 
-                  // Auto-Sync Switcher & Interval
+                const Divider(height: 24),
+
+                // Auto-Sync Switcher & Interval
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            loc.translate('auto_sync'),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            loc.translate('auto_sync_desc'),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? LiquidTheme.darkTextSecondary
+                                  : LiquidTheme.lightTextSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: autoSyncState.isAutoSyncEnabled,
+                      activeTrackColor: LiquidTheme.accentLight,
+                      onChanged: (val) {
+                        ref.read(autoSyncProvider.notifier).toggleAutoSync(val);
+                      },
+                    ),
+                  ],
+                ),
+
+                if (autoSyncState.isAutoSyncEnabled) ...[
+                  const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              loc.translate('auto_sync'),
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white : Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              loc.translate('auto_sync_desc'),
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Switch.adaptive(
-                        value: autoSyncState.isAutoSyncEnabled,
-                        activeTrackColor: LiquidTheme.accentLight,
-                        onChanged: (val) {
-                          ref.read(autoSyncProvider.notifier).toggleAutoSync(val);
-                        },
-                      ),
-                    ],
-                  ),
-
-                  if (autoSyncState.isAutoSyncEnabled) ...[
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          loc.translate('sync_interval'),
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: isDark ? Colors.white70 : Colors.black87,
-                          ),
-                        ),
-                        DropdownButton<int>(
-                          value: autoSyncState.syncIntervalSeconds,
-                          dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                          underline: const SizedBox(),
-                          items: [
-                            DropdownMenuItem(value: 15, child: Text(loc.translate('sync_interval_15s'))),
-                            DropdownMenuItem(value: 30, child: Text(loc.translate('sync_interval_30s'))),
-                            DropdownMenuItem(value: 60, child: Text(loc.translate('sync_interval_1m'))),
-                            DropdownMenuItem(value: 300, child: Text(loc.translate('sync_interval_5m'))),
-                          ],
-                          onChanged: (val) {
-                            if (val != null) {
-                              ref.read(autoSyncProvider.notifier).setSyncInterval(val);
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // ── App Settings (Language, Theme, Alert Region) ───────
-          LiquidGlassLens(
-            style: LiquidTheme.cardStyle(isDark: isDark, radius: 22),
-            child: Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Language Selector
-                  Text(
-                    loc.translate('language'),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: SegmentedButton<String>(
-                      segments: const [
-                        ButtonSegment(value: 'uk', label: Text('Українська')),
-                        ButtonSegment(value: 'en', label: Text('English')),
-                      ],
-                      selected: {locale.languageCode},
-                      onSelectionChanged: (set) {
-                        ref.read(localeProvider.notifier).setLocale(set.first);
-                      },
-                    ),
-                  ),
-                  const Divider(height: 28),
-
-                  // Theme Selector
-                  Text(
-                    loc.translate('theme'),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: SegmentedButton<ThemeMode>(
-                      segments: [
-                        ButtonSegment(
-                          value: ThemeMode.dark,
-                          icon: const Icon(Icons.dark_mode_rounded, size: 16),
-                          label: Text(loc.translate('theme_dark')),
-                        ),
-                        ButtonSegment(
-                          value: ThemeMode.light,
-                          icon: const Icon(Icons.light_mode_rounded, size: 16),
-                          label: Text(loc.translate('theme_light')),
-                        ),
-                      ],
-                      selected: {themeMode == ThemeMode.light ? ThemeMode.light : ThemeMode.dark},
-                      onSelectionChanged: (set) {
-                        ref.read(themeModeProvider.notifier).setThemeMode(set.first);
-                      },
-                    ),
-                  ),
-                  const Divider(height: 28),
-
-                  // Alert Region Selector
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
                       Text(
-                        loc.translate('select_region'),
+                        loc.translate('sync_interval'),
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: isDark ? Colors.white : Colors.black87,
+                          fontSize: 13,
+                          color: isDark ? Colors.white70 : Colors.black87,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        initialValue: alertState.activeRegion,
-                        isExpanded: true,
-                        dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: isDark ? const Color(0x1F334155) : const Color(0x22E2E8F0),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        ),
-                        items: ukrainianRegions.map((r) {
-                          return DropdownMenuItem(
-                            value: r,
-                            child: Text(r, style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
-                          );
-                        }).toList(),
+                      DropdownButton<int>(
+                        value: autoSyncState.syncIntervalSeconds,
+                        dropdownColor: isDark
+                            ? const Color(0xFF1E293B)
+                            : Colors.white,
+                        underline: const SizedBox(),
+                        items: [
+                          DropdownMenuItem(
+                            value: 15,
+                            child: Text(loc.translate('sync_interval_15s')),
+                          ),
+                          DropdownMenuItem(
+                            value: 30,
+                            child: Text(loc.translate('sync_interval_30s')),
+                          ),
+                          DropdownMenuItem(
+                            value: 60,
+                            child: Text(loc.translate('sync_interval_1m')),
+                          ),
+                          DropdownMenuItem(
+                            value: 300,
+                            child: Text(loc.translate('sync_interval_5m')),
+                          ),
+                        ],
                         onChanged: (val) {
                           if (val != null) {
-                            ref.read(airRaidAlertProvider.notifier).updateRegion(val);
+                            ref
+                                .read(autoSyncProvider.notifier)
+                                .setSyncInterval(val);
                           }
                         },
                       ),
                     ],
                   ),
                 ],
-              ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // ── App Settings (Language, Theme, Alert Region) ───────
+          _buildSettingsCard(
+            isDark: isDark,
+            isPerfMode: performanceMode,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Language Selector
+                Text(
+                  loc.translate('language'),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(value: 'uk', label: Text('Українська')),
+                      ButtonSegment(value: 'en', label: Text('English')),
+                    ],
+                    selected: {locale.languageCode},
+                    onSelectionChanged: (set) {
+                      ref.read(localeProvider.notifier).setLocale(set.first);
+                    },
+                  ),
+                ),
+                const Divider(height: 28),
+
+                // Theme Selector
+                Text(
+                  loc.translate('theme'),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<ThemeMode>(
+                    segments: [
+                      ButtonSegment(
+                        value: ThemeMode.dark,
+                        icon: const Icon(Icons.dark_mode_rounded, size: 16),
+                        label: Text(loc.translate('theme_dark')),
+                      ),
+                      ButtonSegment(
+                        value: ThemeMode.light,
+                        icon: const Icon(Icons.light_mode_rounded, size: 16),
+                        label: Text(loc.translate('theme_light')),
+                      ),
+                    ],
+                    selected: {
+                      themeMode == ThemeMode.light
+                          ? ThemeMode.light
+                          : ThemeMode.dark,
+                    },
+                    onSelectionChanged: (set) {
+                      ref
+                          .read(themeModeProvider.notifier)
+                          .setThemeMode(set.first);
+                    },
+                  ),
+                ),
+                const Divider(height: 28),
+
+                // Alert Region Selector
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      loc.translate('select_region'),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      initialValue: alertState.activeRegion,
+                      isExpanded: true,
+                      dropdownColor: isDark
+                          ? const Color(0xFF1E293B)
+                          : Colors.white,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: isDark
+                            ? const Color(0x1F334155)
+                            : const Color(0x22E2E8F0),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                      ),
+                      items: ukrainianRegions.map((r) {
+                        return DropdownMenuItem(
+                          value: r,
+                          child: Text(
+                            r,
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          ref
+                              .read(airRaidAlertProvider.notifier)
+                              .updateRegion(val);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // ── Display & Interface Settings ─────────────────────
+          _buildSettingsCard(
+            isDark: isDark,
+            isPerfMode: performanceMode,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  loc.translate('display_settings'),
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Show Classrooms Switch
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            loc.translate('show_classrooms'),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            loc.translate('show_classrooms_desc'),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? LiquidTheme.darkTextSecondary
+                                  : LiquidTheme.lightTextSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: showClassrooms,
+                      activeTrackColor: LiquidTheme.accentLight,
+                      onChanged: (val) {
+                        ref.read(showClassroomsProvider.notifier).toggle(val);
+                      },
+                    ),
+                  ],
+                ),
+                const Divider(height: 20),
+
+                // Skip Weekends to Monday Switch
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            loc.translate('skip_weekends'),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            loc.translate('skip_weekends_desc'),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? LiquidTheme.darkTextSecondary
+                                  : LiquidTheme.lightTextSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: skipWeekends,
+                      activeTrackColor: LiquidTheme.accentLight,
+                      onChanged: (val) {
+                        ref.read(skipWeekendsProvider.notifier).toggle(val);
+                      },
+                    ),
+                  ],
+                ),
+                const Divider(height: 20),
+
+                // Performance / Smooth Scrolling Mode Switch
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                loc.translate('performance_mode'),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 5,
+                                  vertical: 1,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: LiquidTheme.success.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  '60 FPS',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: LiquidTheme.success,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            loc.translate('performance_mode_desc'),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? LiquidTheme.darkTextSecondary
+                                  : LiquidTheme.lightTextSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: performanceMode,
+                      activeTrackColor: LiquidTheme.success,
+                      onChanged: (val) {
+                        ref.read(performanceModeProvider.notifier).toggle(val);
+                      },
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
 
           // ── Academic Configuration Buttons ────────────────────
-          LiquidGlassLens(
-            style: LiquidTheme.cardStyle(isDark: isDark, radius: 22),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+          _buildSettingsCard(
+            isDark: isDark,
+            isPerfMode: performanceMode,
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(
+                    Icons.book_rounded,
+                    color: LiquidTheme.accentLight,
+                  ),
+                  title: Text(
+                    loc.translate('subjects'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => const SubjectsSheet(),
+                    );
+                  },
                 ),
-              ),
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.book_rounded, color: LiquidTheme.accentLight),
-                    title: Text(
-                      loc.translate('subjects'),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : Colors.black87,
-                      ),
-                    ),
-                    trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (_) => const SubjectsSheet(),
-                      );
-                    },
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(
+                    Icons.notifications_active_rounded,
+                    color: Colors.amberAccent,
                   ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.notifications_active_rounded, color: Colors.amberAccent),
-                    title: Text(
-                      loc.translate('bells'),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : Colors.black87,
-                      ),
+                  title: Text(
+                    loc.translate('bells'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : Colors.black87,
                     ),
-                    trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (_) => const BellsSheet(),
-                      );
-                    },
                   ),
-                ],
-              ),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => const BellsSheet(),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
@@ -605,13 +850,59 @@ class SettingsScreen extends ConsumerWidget {
                   );
                 }
               },
-              icon: const Icon(Icons.cleaning_services_rounded, size: 16, color: LiquidTheme.danger),
-              label: const Text('Clear Local Cache', style: TextStyle(color: LiquidTheme.danger)),
+              icon: const Icon(
+                Icons.cleaning_services_rounded,
+                size: 16,
+                color: LiquidTheme.danger,
+              ),
+              label: const Text(
+                'Clear Local Cache',
+                style: TextStyle(color: LiquidTheme.danger),
+              ),
             ),
           ),
         ],
       ),
-    ),
-  );
-}
+    );
+
+    return performanceMode ? scrollView : LiquidGlassBatch(child: scrollView);
+  }
+
+  Widget _buildSettingsCard({
+    required Widget child,
+    required bool isDark,
+    required bool isPerfMode,
+    double radius = 22,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(18),
+  }) {
+    if (isPerfMode) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0x381E293B) : const Color(0xB3FFFFFF),
+            borderRadius: BorderRadius.circular(radius),
+            border: Border.all(
+              color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+            ),
+          ),
+          child: child,
+        ),
+      );
+    }
+    return LiquidGlassLens(
+      style: LiquidTheme.cardStyle(isDark: isDark, radius: radius),
+      child: Container(
+        padding: padding,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(radius),
+          border: Border.all(
+            color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+          ),
+        ),
+        child: child,
+      ),
+    );
+  }
 }

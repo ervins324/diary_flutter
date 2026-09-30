@@ -41,10 +41,7 @@ class DiaryApp extends ConsumerWidget {
       title: 'School Diary',
       debugShowCheckedModeBanner: false,
       locale: locale,
-      supportedLocales: const [
-        Locale('uk'),
-        Locale('en'),
-      ],
+      supportedLocales: const [Locale('uk'), Locale('en')],
       localizationsDelegates: const [
         AppLocalizationsDelegate(),
         GlobalMaterialLocalizations.delegate,

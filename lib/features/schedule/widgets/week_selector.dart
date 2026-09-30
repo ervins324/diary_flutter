@@ -4,6 +4,7 @@ import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/liquid_theme.dart';
 import '../../../providers/schedule_provider.dart';
+import '../../../providers/settings_provider.dart';
 
 /// Top header for switching weeks and selecting active day of the week.
 class WeekSelector extends ConsumerWidget {
@@ -12,6 +13,7 @@ class WeekSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedDate = ref.watch(selectedDateProvider);
+    final isPerfMode = ref.watch(performanceModeProvider);
     final loc = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -22,6 +24,52 @@ class WeekSelector extends ConsumerWidget {
     final days = List.generate(6, (i) => monday.add(Duration(days: i)));
     final dayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
+    final weekTypePillContent = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: isPerfMode
+            ? (isDark ? const Color(0x381E293B) : const Color(0xB3FFFFFF))
+            : null,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isNumerator
+              ? LiquidTheme.accent.withValues(alpha: 0.5)
+              : Colors.purpleAccent.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isNumerator ? Icons.looks_one_rounded : Icons.looks_two_rounded,
+            size: 16,
+            color: isNumerator ? LiquidTheme.accentLight : Colors.purpleAccent,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            isNumerator
+                ? loc.translate('numerator_week')
+                : loc.translate('denominator_week'),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final wrappedWeekTypePill = isPerfMode
+        ? ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: weekTypePillContent,
+          )
+        : LiquidGlassLens(
+            style: LiquidTheme.pillStyle(isDark: isDark, radius: 16),
+            child: weekTypePillContent,
+          );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Column(
@@ -31,59 +79,27 @@ class WeekSelector extends ConsumerWidget {
             children: [
               IconButton(
                 onPressed: () {
-                  final prevWeek = selectedDate.subtract(const Duration(days: 7));
+                  final prevWeek = selectedDate.subtract(
+                    const Duration(days: 7),
+                  );
                   ref.read(selectedDateProvider.notifier).state = prevWeek;
-                  ref.read(scheduleProvider.notifier).loadWeekSchedule(prevWeek);
+                  ref
+                      .read(scheduleProvider.notifier)
+                      .loadWeekSchedule(prevWeek);
                 },
                 icon: const Icon(Icons.chevron_left_rounded, size: 28),
                 color: isDark ? Colors.white70 : Colors.black87,
               ),
 
-              Expanded(
-                child: Center(
-                  child: LiquidGlassLens(
-                    style: LiquidTheme.pillStyle(isDark: isDark, radius: 16),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isNumerator
-                              ? LiquidTheme.accent.withValues(alpha: 0.5)
-                              : Colors.purpleAccent.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isNumerator ? Icons.looks_one_rounded : Icons.looks_two_rounded,
-                            size: 16,
-                            color: isNumerator ? LiquidTheme.accentLight : Colors.purpleAccent,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            isNumerator
-                                ? loc.translate('numerator_week')
-                                : loc.translate('denominator_week'),
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              Expanded(child: Center(child: wrappedWeekTypePill)),
 
               IconButton(
                 onPressed: () {
                   final nextWeek = selectedDate.add(const Duration(days: 7));
                   ref.read(selectedDateProvider.notifier).state = nextWeek;
-                  ref.read(scheduleProvider.notifier).loadWeekSchedule(nextWeek);
+                  ref
+                      .read(scheduleProvider.notifier)
+                      .loadWeekSchedule(nextWeek);
                 },
                 icon: const Icon(Icons.chevron_right_rounded, size: 28),
                 color: isDark ? Colors.white70 : Colors.black87,
@@ -97,10 +113,12 @@ class WeekSelector extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(6, (index) {
               final d = days[index];
-              final isSelected = d.year == selectedDate.year &&
+              final isSelected =
+                  d.year == selectedDate.year &&
                   d.month == selectedDate.month &&
                   d.day == selectedDate.day;
-              final isToday = d.year == DateTime.now().year &&
+              final isToday =
+                  d.year == DateTime.now().year &&
                   d.month == DateTime.now().month &&
                   d.day == DateTime.now().day;
 
@@ -111,62 +129,144 @@ class WeekSelector extends ConsumerWidget {
                   },
                   child: Container(
                     margin: const EdgeInsets.symmetric(horizontal: 2.0),
-                    child: LiquidGlassLens(
-                      style: LiquidGlassStyle(
-                        shape: const LiquidGlassShape.continuousRoundedRectangle(
-                          cornerRadius: 14.0,
-                        ),
-                        appearance: LiquidGlassAppearance(
-                          color: isSelected
-                              ? (isDark ? const Color(0x666366F1) : const Color(0xCC6366F1))
-                              : (isDark ? const Color(0x1A1E293B) : const Color(0x33CBD5E1)),
-                          blur: const LiquidGlassBlur(sigmaX: 4.0, sigmaY: 4.0),
-                        ),
-                        refraction: const LiquidGlassRefraction(distortion: 0.04),
-                        liteGlass: LiquidGlassLitePickup.blend,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14.0),
-                          border: Border.all(
-                            color: isSelected
-                                ? LiquidTheme.accentLight
-                                : (isToday
-                                    ? LiquidTheme.accent.withValues(alpha: 0.4)
-                                    : Colors.transparent),
-                            width: isSelected ? 1.5 : 1.0,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              loc.translate(dayKeys[index]),
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
+                    child: isPerfMode
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(14.0),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 8.0,
+                              ),
+                              decoration: BoxDecoration(
                                 color: isSelected
-                                    ? Colors.white
+                                    ? (isDark
+                                          ? const Color(0x666366F1)
+                                          : const Color(0xCC6366F1))
                                     : (isDark
-                                        ? LiquidTheme.darkTextSecondary
-                                        : LiquidTheme.lightTextSecondary),
+                                          ? const Color(0x381E293B)
+                                          : const Color(0xB3FFFFFF)),
+                                borderRadius: BorderRadius.circular(14.0),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? LiquidTheme.accentLight
+                                      : (isToday
+                                            ? LiquidTheme.accent.withValues(
+                                                alpha: 0.4,
+                                              )
+                                            : (isDark
+                                                  ? LiquidTheme.darkBorder
+                                                  : LiquidTheme.lightBorder)),
+                                  width: isSelected ? 1.5 : 1.0,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    loc.translate(dayKeys[index]),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : (isDark
+                                                ? LiquidTheme.darkTextSecondary
+                                                : LiquidTheme
+                                                      .lightTextSecondary),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${d.day}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : (isDark
+                                                ? Colors.white70
+                                                : Colors.black87),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${d.day}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          )
+                        : LiquidGlassLens(
+                            style: LiquidGlassStyle(
+                              shape:
+                                  const LiquidGlassShape.continuousRoundedRectangle(
+                                    cornerRadius: 14.0,
+                                  ),
+                              appearance: LiquidGlassAppearance(
                                 color: isSelected
-                                    ? Colors.white
-                                    : (isDark ? Colors.white70 : Colors.black87),
+                                    ? (isDark
+                                          ? const Color(0x666366F1)
+                                          : const Color(0xCC6366F1))
+                                    : (isDark
+                                          ? const Color(0x1A1E293B)
+                                          : const Color(0x33CBD5E1)),
+                                blur: const LiquidGlassBlur(
+                                  sigmaX: 4.0,
+                                  sigmaY: 4.0,
+                                ),
+                              ),
+                              refraction: const LiquidGlassRefraction(
+                                distortion: 0.04,
+                              ),
+                              liteGlass: LiquidGlassLitePickup.blend,
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 8.0,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(14.0),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? LiquidTheme.accentLight
+                                      : (isToday
+                                            ? LiquidTheme.accent.withValues(
+                                                alpha: 0.4,
+                                              )
+                                            : Colors.transparent),
+                                  width: isSelected ? 1.5 : 1.0,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    loc.translate(dayKeys[index]),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : (isDark
+                                                ? LiquidTheme.darkTextSecondary
+                                                : LiquidTheme
+                                                      .lightTextSecondary),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${d.day}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : (isDark
+                                                ? Colors.white70
+                                                : Colors.black87),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
+                          ),
                   ),
                 ),
               );

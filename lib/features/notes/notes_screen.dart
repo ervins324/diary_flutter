@@ -30,6 +30,7 @@ class NotesScreen extends ConsumerWidget {
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 70.0),
         child: FloatingActionButton(
+          heroTag: 'notes_fab',
           onPressed: () {
             showModalBottomSheet(
               context: context,
@@ -40,7 +41,9 @@ class NotesScreen extends ConsumerWidget {
           },
           backgroundColor: LiquidTheme.accent,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
           child: const Icon(Icons.add_rounded, size: 28),
         ),
       ),
@@ -51,89 +54,107 @@ class NotesScreen extends ConsumerWidget {
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-            // Search Bar
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                child: TextField(
-                  onChanged: (val) => ref.read(notesSearchProvider.notifier).state = val,
-                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-                  decoration: InputDecoration(
-                    hintText: loc.translate('search_notes'),
-                    hintStyle: TextStyle(
-                      color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
-                      fontSize: 14,
+              // Search Bar
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: TextField(
+                    onChanged: (val) =>
+                        ref.read(notesSearchProvider.notifier).state = val,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
                     ),
-                    prefixIcon: const Icon(Icons.search_rounded, color: LiquidTheme.accentLight),
-                    filled: true,
-                    fillColor: isDark ? const Color(0x1F1E293B) : const Color(0x22CBD5E1),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                    decoration: InputDecoration(
+                      hintText: loc.translate('search_notes'),
+                      hintStyle: TextStyle(
+                        color: isDark
+                            ? LiquidTheme.darkTextMuted
+                            : LiquidTheme.lightTextMuted,
+                        fontSize: 14,
                       ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder,
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: LiquidTheme.accentLight,
                       ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            if (filtered.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.edit_note_rounded,
-                        size: 52,
-                        color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        loc.translate('no_notes'),
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary,
+                      filled: true,
+                      fillColor: isDark
+                          ? const Color(0x1F1E293B)
+                          : const Color(0x22CBD5E1),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? LiquidTheme.darkBorder
+                              : LiquidTheme.lightBorder,
                         ),
                       ),
-                    ],
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? LiquidTheme.darkBorder
+                              : LiquidTheme.lightBorder,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              )
-            else
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final note = filtered[index];
-                    return NoteCard(key: ValueKey(note.id), note: note);
-                  },
-                  findChildIndexCallback: (Key key) {
-                    if (key is ValueKey<String>) {
-                      final idx = filtered.indexWhere((n) => n.id == key.value);
-                      return idx >= 0 ? idx : null;
-                    }
-                    return null;
-                  },
-                  childCount: filtered.length,
                 ),
               ),
 
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 80),
-            ),
-          ],
+              if (filtered.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.edit_note_rounded,
+                          size: 52,
+                          color: isDark
+                              ? LiquidTheme.darkTextMuted
+                              : LiquidTheme.lightTextMuted,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          loc.translate('no_notes'),
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: isDark
+                                ? LiquidTheme.darkTextSecondary
+                                : LiquidTheme.lightTextSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final note = filtered[index];
+                      return NoteCard(key: ValueKey(note.id), note: note);
+                    },
+                    findChildIndexCallback: (Key key) {
+                      if (key is ValueKey<String>) {
+                        final idx = filtered.indexWhere(
+                          (n) => n.id == key.value,
+                        );
+                        return idx >= 0 ? idx : null;
+                      }
+                      return null;
+                    },
+                    childCount: filtered.length,
+                  ),
+                ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 80)),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

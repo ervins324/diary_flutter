@@ -67,28 +67,27 @@ class AutoSyncService extends StateNotifier<AutoSyncState> {
   bool _isDisposed = false;
 
   AutoSyncService(this._ref, this._apiClient, this._syncQueue)
-      : super(AutoSyncState(
+    : super(
+        AutoSyncState(
           isAutoSyncEnabled: HiveBoxes.getAutoSyncEnabled(),
           syncIntervalSeconds: HiveBoxes.getAutoSyncInterval(),
           lastSyncTime: HiveBoxes.getLastSyncTime(),
           pendingCount: HiveBoxes.getPendingSyncCount(),
-        )) {
+        ),
+      ) {
     _initAutoSync();
   }
 
   void _initAutoSync() {
     // 1. Listen for connectivity restoration
     try {
-      _connectivitySub = Connectivity().onConnectivityChanged.listen(
-        (results) {
-          final hasConnection = results.any((r) => r != ConnectivityResult.none);
-          state = state.copyWith(isOnline: hasConnection);
-          if (hasConnection && state.isAutoSyncEnabled) {
-            syncAll();
-          }
-        },
-        onError: (_) {},
-      );
+      _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+        final hasConnection = results.any((r) => r != ConnectivityResult.none);
+        state = state.copyWith(isOnline: hasConnection);
+        if (hasConnection && state.isAutoSyncEnabled) {
+          syncAll();
+        }
+      }, onError: (_) {});
     } catch (_) {}
 
     // 2. Listen for app returning to foreground
@@ -150,15 +149,18 @@ class AutoSyncService extends StateNotifier<AutoSyncState> {
     try {
       // Step A: Fast health check
       final isHealthy = await _apiClient.checkHealth();
-      _ref.read(activeServerUrlProvider.notifier).state = _apiClient.activeBaseUrl;
-      _ref.read(isTailscaleActiveProvider.notifier).state = _apiClient.isTailscaleActive;
+      _ref.read(activeServerUrlProvider.notifier).state =
+          _apiClient.activeBaseUrl;
+      _ref.read(isTailscaleActiveProvider.notifier).state =
+          _apiClient.isTailscaleActive;
 
       if (!isHealthy) {
         if (_isDisposed || !mounted) return false;
         state = state.copyWith(
           isSyncing: false,
           isOnline: false,
-          lastError: _apiClient.lastHealthCheckError ??
+          lastError:
+              _apiClient.lastHealthCheckError ??
               'Server unreachable (${_apiClient.currentBaseUrl})',
           pendingCount: HiveBoxes.getPendingSyncCount(),
         );
@@ -177,7 +179,9 @@ class AutoSyncService extends StateNotifier<AutoSyncState> {
         _ref.read(notesListProvider.notifier).fetchRemote(),
         _ref.read(subjectsProvider.notifier).fetchRemote(),
         _ref.read(bellsProvider.notifier).fetchRemote(),
-        _ref.read(scheduleProvider.notifier).refresh(_ref.read(selectedDateProvider)),
+        _ref
+            .read(scheduleProvider.notifier)
+            .refresh(_ref.read(selectedDateProvider)),
       ];
 
       await Future.wait(syncTasks);
@@ -219,7 +223,9 @@ class AutoSyncService extends StateNotifier<AutoSyncState> {
 }
 
 /// Global provider for the auto-sync service.
-final autoSyncProvider = StateNotifierProvider<AutoSyncService, AutoSyncState>((ref) {
+final autoSyncProvider = StateNotifierProvider<AutoSyncService, AutoSyncState>((
+  ref,
+) {
   final api = ref.watch(apiClientProvider);
   final queue = ref.read(syncQueueProvider);
   return AutoSyncService(ref, api, queue);

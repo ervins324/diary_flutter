@@ -6,18 +6,43 @@ import '../core/database/hive_boxes.dart';
 import '../models/schedule_model.dart';
 import 'api_client_provider.dart';
 
+/// Helper to determine the initial schedule date, optionally skipping weekends to Monday
+DateTime getDefaultScheduleDate({bool? skipWeekends}) {
+  final shouldSkip = skipWeekends ?? HiveBoxes.getSkipWeekends();
+  final now = DateTime.now();
+  if (shouldSkip) {
+    if (now.weekday == DateTime.saturday) {
+      return DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).add(const Duration(days: 2));
+    } else if (now.weekday == DateTime.sunday) {
+      return DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).add(const Duration(days: 1));
+    }
+  }
+  return now;
+}
+
 /// Currently selected date in the schedule viewer
 final selectedDateProvider = StateProvider<DateTime>((ref) {
-  return DateTime.now();
+  return getDefaultScheduleDate();
 });
 
 /// Calculates Monday-based ISO week difference to determine Numerator or Denominator.
 String calculateWeekType(DateTime targetDate, {String? anchorDateStr}) {
-  final anchor = DateTime.tryParse(anchorDateStr ?? AppConfig.defaultAnchorDate) ??
+  final anchor =
+      DateTime.tryParse(anchorDateStr ?? AppConfig.defaultAnchorDate) ??
       DateTime(2026, 9, 1);
 
   // Compute Monday of both weeks
-  final targetMonday = targetDate.subtract(Duration(days: targetDate.weekday - 1));
+  final targetMonday = targetDate.subtract(
+    Duration(days: targetDate.weekday - 1),
+  );
   final anchorMonday = anchor.subtract(Duration(days: anchor.weekday - 1));
 
   final daysDiff = targetMonday.difference(anchorMonday).inDays;
@@ -28,9 +53,11 @@ String calculateWeekType(DateTime targetDate, {String? anchorDateStr}) {
 
 /// Provides Monday date for any given date
 DateTime getMonday(DateTime date) {
-  return DateTime(date.year, date.month, date.day).subtract(
-    Duration(days: date.weekday - 1),
-  );
+  return DateTime(
+    date.year,
+    date.month,
+    date.day,
+  ).subtract(Duration(days: date.weekday - 1));
 }
 
 /// Flag indicating if the schedule couldn't be loaded from the server
@@ -42,8 +69,9 @@ class ScheduleNotifier extends StateNotifier<AsyncValue<List<DaySchedule>>> {
   final Ref _ref;
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
 
-  ScheduleNotifier(this._apiClient, this._ref) : super(const AsyncValue.loading()) {
-    loadWeekSchedule(DateTime.now());
+  ScheduleNotifier(this._apiClient, this._ref)
+    : super(const AsyncValue.loading()) {
+    loadWeekSchedule(_ref.read(selectedDateProvider));
   }
 
   Future<void> loadWeekSchedule(DateTime targetDate) async {
@@ -102,7 +130,9 @@ class ScheduleNotifier extends StateNotifier<AsyncValue<List<DaySchedule>>> {
 }
 
 final scheduleProvider =
-    StateNotifierProvider<ScheduleNotifier, AsyncValue<List<DaySchedule>>>((ref) {
-  final api = ref.watch(apiClientProvider);
-  return ScheduleNotifier(api, ref);
-});
+    StateNotifierProvider<ScheduleNotifier, AsyncValue<List<DaySchedule>>>((
+      ref,
+    ) {
+      final api = ref.watch(apiClientProvider);
+      return ScheduleNotifier(api, ref);
+    });

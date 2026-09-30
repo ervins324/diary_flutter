@@ -6,6 +6,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/liquid_theme.dart';
 import '../../../models/homework_model.dart';
 import '../../../providers/homework_provider.dart';
+import '../../../providers/settings_provider.dart';
 import '../../common/widgets/attachment_chips_view.dart';
 import '../../schedule/widgets/lesson_slot_card.dart';
 
@@ -35,7 +36,9 @@ class _HomeworkCardState extends ConsumerState<HomeworkCard> {
       _studyTimer?.cancel();
       _isTimerActive = false;
       if (_sessionSeconds > 0) {
-        ref.read(homeworkListProvider.notifier).updateTimeSpent(widget.item, _sessionSeconds);
+        ref
+            .read(homeworkListProvider.notifier)
+            .updateTimeSpent(widget.item, _sessionSeconds);
         _sessionSeconds = 0;
       }
       setState(() {});
@@ -62,170 +65,210 @@ class _HomeworkCardState extends ConsumerState<HomeworkCard> {
     final minutes = totalSeconds ~/ 60;
     final seconds = totalSeconds % 60;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
-      child: LiquidGlassLens(
-        style: LiquidTheme.cardStyle(isDark: isDark, radius: 20),
-        child: Container(
-          padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: widget.item.isCompleted
-                  ? LiquidTheme.success.withValues(alpha: 0.3)
-                  : (isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder),
-            ),
+    final isPerformanceMode = ref.watch(performanceModeProvider);
+
+    final cardContent = Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: isPerformanceMode
+            ? (isDark ? const Color(0x381E293B) : const Color(0xB3FFFFFF))
+            : null,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: widget.item.isCompleted
+              ? LiquidTheme.success.withValues(alpha: 0.3)
+              : (isDark ? LiquidTheme.darkBorder : LiquidTheme.lightBorder),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row: Subject name, Due date, and Sync status
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: subjectColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                widget.item.subject?.name ?? 'Homework',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              const Spacer(),
+
+              // Due date chip
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0x33475569)
+                      : const Color(0x33CBD5E1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  widget.item.dueDate,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+              ),
+
+              if (widget.item.isPendingSync) ...[
+                const SizedBox(width: 6),
+                const Icon(
+                  Icons.cloud_upload_outlined,
+                  size: 16,
+                  color: LiquidTheme.warning,
+                ),
+              ],
+            ],
           ),
-          child: Column(
+          const SizedBox(height: 10),
+
+          // Homework text & checkbox
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header row: Subject name, Due date, and Sync status
-              Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: subjectColor,
-                      shape: BoxShape.circle,
-                    ),
+              Transform.scale(
+                scale: 1.1,
+                child: Checkbox(
+                  value: widget.item.isCompleted,
+                  activeColor: LiquidTheme.success,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    widget.item.subject?.name ?? 'Homework',
+                  onChanged: (_) {
+                    ref
+                        .read(homeworkListProvider.notifier)
+                        .toggleComplete(widget.item);
+                  },
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    widget.item.text,
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black87,
+                      fontSize: 15,
+                      decoration: widget.item.isCompleted
+                          ? TextDecoration.lineThrough
+                          : null,
+                      color: widget.item.isCompleted
+                          ? (isDark
+                                ? LiquidTheme.darkTextMuted
+                                : LiquidTheme.lightTextMuted)
+                          : (isDark ? Colors.white : Colors.black87),
                     ),
                   ),
-                  const Spacer(),
-
-                  // Due date chip
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0x33475569) : const Color(0x33CBD5E1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      widget.item.dueDate,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white70 : Colors.black87,
-                      ),
-                    ),
-                  ),
-
-                  if (widget.item.isPendingSync) ...[
-                    const SizedBox(width: 6),
-                    const Icon(Icons.cloud_upload_outlined, size: 16, color: LiquidTheme.warning),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 10),
-
-              // Homework text & checkbox
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Transform.scale(
-                    scale: 1.1,
-                    child: Checkbox(
-                      value: widget.item.isCompleted,
-                      activeColor: LiquidTheme.success,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                      onChanged: (_) {
-                        ref.read(homeworkListProvider.notifier).toggleComplete(widget.item);
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        widget.item.text,
-                        style: TextStyle(
-                          fontSize: 15,
-                          decoration: widget.item.isCompleted ? TextDecoration.lineThrough : null,
-                          color: widget.item.isCompleted
-                              ? (isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted)
-                              : (isDark ? Colors.white : Colors.black87),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              // Attachment & Image previews with tap-to-zoom
-              AttachmentChipsView(
-                images: widget.item.images,
-                attachments: widget.item.attachments,
-                isDark: isDark,
-              ),
-
-              const SizedBox(height: 12),
-
-              // Footer: Timer controls & Delete action
-              Row(
-                children: [
-                  // Study timer button
-                  GestureDetector(
-                    onTap: _toggleTimer,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: _isTimerActive
-                            ? LiquidTheme.warning.withValues(alpha: 0.2)
-                            : (isDark ? const Color(0x1F334155) : const Color(0x22E2E8F0)),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: _isTimerActive ? LiquidTheme.warning : Colors.transparent,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _isTimerActive ? Icons.pause_circle_rounded : Icons.play_circle_rounded,
-                            size: 16,
-                            color: _isTimerActive ? LiquidTheme.warning : LiquidTheme.accentLight,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '$minutes ${loc.translate('minutes')} ${seconds > 0 ? '$seconds ${loc.translate('seconds')}' : ''}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: _isTimerActive
-                                  ? LiquidTheme.warning
-                                  : (isDark ? LiquidTheme.darkTextSecondary : LiquidTheme.lightTextSecondary),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // Delete homework button
-                  IconButton(
-                    onPressed: () {
-                      ref.read(homeworkListProvider.notifier).deleteHomework(widget.item.id);
-                    },
-                    icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                    color: LiquidTheme.danger.withValues(alpha: 0.7),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
-        ),
+
+          // Attachment & Image previews with tap-to-zoom
+          AttachmentChipsView(
+            images: widget.item.images,
+            attachments: widget.item.attachments,
+            isDark: isDark,
+          ),
+
+          const SizedBox(height: 12),
+
+          // Footer: Timer controls & Delete action
+          Row(
+            children: [
+              // Study timer button
+              GestureDetector(
+                onTap: _toggleTimer,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _isTimerActive
+                        ? LiquidTheme.warning.withValues(alpha: 0.2)
+                        : (isDark
+                              ? const Color(0x1F334155)
+                              : const Color(0x22E2E8F0)),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: _isTimerActive
+                          ? LiquidTheme.warning
+                          : Colors.transparent,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _isTimerActive
+                            ? Icons.pause_circle_rounded
+                            : Icons.play_circle_rounded,
+                        size: 16,
+                        color: _isTimerActive
+                            ? LiquidTheme.warning
+                            : LiquidTheme.accentLight,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '$minutes ${loc.translate('minutes')} ${seconds > 0 ? '$seconds ${loc.translate('seconds')}' : ''}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: _isTimerActive
+                              ? LiquidTheme.warning
+                              : (isDark
+                                    ? LiquidTheme.darkTextSecondary
+                                    : LiquidTheme.lightTextSecondary),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const Spacer(),
+
+              // Delete homework button
+              IconButton(
+                onPressed: () {
+                  ref
+                      .read(homeworkListProvider.notifier)
+                      .deleteHomework(widget.item.id);
+                },
+                icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                color: LiquidTheme.danger.withValues(alpha: 0.7),
+              ),
+            ],
+          ),
+        ],
       ),
+    );
+
+    final wrappedCard = isPerformanceMode
+        ? ClipRRect(borderRadius: BorderRadius.circular(20), child: cardContent)
+        : LiquidGlassLens(
+            style: LiquidTheme.cardStyle(isDark: isDark, radius: 20),
+            child: cardContent,
+          );
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+      child: wrappedCard,
     );
   }
 }

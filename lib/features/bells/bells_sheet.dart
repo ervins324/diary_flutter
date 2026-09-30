@@ -21,10 +21,15 @@ class BellsSheet extends ConsumerWidget {
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Text(
             loc.translate('add_bell'),
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -83,8 +88,13 @@ class BellsSheet extends ConsumerWidget {
                 ref.read(bellsProvider.notifier).saveBellsBulk(updated);
                 Navigator.of(ctx).pop();
               },
-              style: ElevatedButton.styleFrom(backgroundColor: LiquidTheme.accent),
-              child: Text(loc.translate('save'), style: const TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: LiquidTheme.accent,
+              ),
+              child: Text(
+                loc.translate('save'),
+                style: const TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -113,7 +123,9 @@ class BellsSheet extends ConsumerWidget {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0x4094A3B8) : const Color(0x4064748B),
+                color: isDark
+                    ? const Color(0x4094A3B8)
+                    : const Color(0x4064748B),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -133,7 +145,11 @@ class BellsSheet extends ConsumerWidget {
               ),
               IconButton(
                 onPressed: () => _showAddBellDialog(context, ref),
-                icon: const Icon(Icons.add_circle_outline_rounded, color: LiquidTheme.accentLight, size: 28),
+                icon: const Icon(
+                  Icons.add_circle_outline_rounded,
+                  color: LiquidTheme.accentLight,
+                  size: 28,
+                ),
               ),
             ],
           ),
@@ -150,15 +166,23 @@ class BellsSheet extends ConsumerWidget {
                 final b = bells[index];
                 return Container(
                   margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0x1F334155) : const Color(0x22CBD5E1),
+                    color: isDark
+                        ? const Color(0x1F334155)
+                        : const Color(0x22CBD5E1),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: LiquidTheme.accent.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),

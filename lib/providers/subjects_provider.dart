@@ -57,6 +57,6 @@ class SubjectsNotifier extends StateNotifier<List<SubjectModel>> {
 
 final subjectsProvider =
     StateNotifierProvider<SubjectsNotifier, List<SubjectModel>>((ref) {
-  final api = ref.watch(apiClientProvider);
-  return SubjectsNotifier(api);
-});
+      final api = ref.watch(apiClientProvider);
+      return SubjectsNotifier(api);
+    });

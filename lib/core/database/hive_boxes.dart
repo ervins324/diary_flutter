@@ -36,7 +36,11 @@ class HiveBoxes {
 
   // ── Settings ──────────────────────────────────────────────────
   static String getServerUrl() {
-    return _settingsBox.get('server_url', defaultValue: AppConfig.defaultServerUrl) as String;
+    return _settingsBox.get(
+          'server_url',
+          defaultValue: AppConfig.defaultServerUrl,
+        )
+        as String;
   }
 
   static Future<void> setServerUrl(String url) async {
@@ -44,7 +48,11 @@ class HiveBoxes {
   }
 
   static String getTailscaleUrl() {
-    return _settingsBox.get('tailscale_url', defaultValue: AppConfig.defaultTailscaleUrl) as String;
+    return _settingsBox.get(
+          'tailscale_url',
+          defaultValue: AppConfig.defaultTailscaleUrl,
+        )
+        as String;
   }
 
   static Future<void> setTailscaleUrl(String url) async {
@@ -52,7 +60,8 @@ class HiveBoxes {
   }
 
   static String getActiveServerUrl() {
-    return _settingsBox.get('active_server_url', defaultValue: getServerUrl()) as String;
+    return _settingsBox.get('active_server_url', defaultValue: getServerUrl())
+        as String;
   }
 
   static Future<void> setActiveServerUrl(String url) async {
@@ -92,7 +101,8 @@ class HiveBoxes {
   }
 
   static int getAutoSyncInterval() {
-    return (_settingsBox.get('auto_sync_interval', defaultValue: 30) as num).toInt();
+    return (_settingsBox.get('auto_sync_interval', defaultValue: 30) as num)
+        .toInt();
   }
 
   static Future<void> setAutoSyncInterval(int seconds) async {
@@ -109,6 +119,31 @@ class HiveBoxes {
 
   static Future<void> setLastSyncTime(DateTime time) async {
     await _settingsBox.put('last_sync_timestamp', time.toIso8601String());
+  }
+
+  static bool getShowClassrooms() {
+    return _settingsBox.get('show_classrooms', defaultValue: true) as bool;
+  }
+
+  static Future<void> setShowClassrooms(bool val) async {
+    await _settingsBox.put('show_classrooms', val);
+  }
+
+  static bool getSkipWeekends() {
+    return _settingsBox.get('skip_weekends_to_monday', defaultValue: false)
+        as bool;
+  }
+
+  static Future<void> setSkipWeekends(bool val) async {
+    await _settingsBox.put('skip_weekends_to_monday', val);
+  }
+
+  static bool getPerformanceMode() {
+    return _settingsBox.get('performance_mode', defaultValue: true) as bool;
+  }
+
+  static Future<void> setPerformanceMode(bool val) async {
+    await _settingsBox.put('performance_mode', val);
   }
 
   // ── Subjects ──────────────────────────────────────────────────

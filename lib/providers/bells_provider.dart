@@ -43,8 +43,9 @@ class BellsNotifier extends StateNotifier<List<BellSlotModel>> {
   }
 }
 
-final bellsProvider =
-    StateNotifierProvider<BellsNotifier, List<BellSlotModel>>((ref) {
-  final api = ref.watch(apiClientProvider);
-  return BellsNotifier(api);
-});
+final bellsProvider = StateNotifierProvider<BellsNotifier, List<BellSlotModel>>(
+  (ref) {
+    final api = ref.watch(apiClientProvider);
+    return BellsNotifier(api);
+  },
+);

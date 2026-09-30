@@ -60,4 +60,3 @@ class SubjectModel {
   @override
   int get hashCode => id.hashCode;
 }
-

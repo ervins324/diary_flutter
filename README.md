@@ -4,10 +4,11 @@ Cross-platform Flutter mobile client for the School Diary ecosystem, featuring *
 
 ---
 
-## 📖 Documentation
+## 📖 Documentation & Architecture
 
 For full architectural blueprints, package deep-dives, synchronization flows, and feature breakdowns, please refer to:
-👉 **[DOCS.md](DOCS.md)**
+- 👉 **[tech.md](tech.md)** — Architectural blueprint, Hive box definitions, and API contracts.
+- 👉 **[WORKFLOW.md](WORKFLOW.md)** — Staged development workflow and vertical slice guide.
 
 ---
 

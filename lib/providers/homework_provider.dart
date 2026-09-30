@@ -28,7 +28,10 @@ class HomeworkNotifier extends StateNotifier<List<HomeworkItem>> {
     try {
       final remote = await _apiClient.getHomeworkList();
       // Merge remote with local pending sync items so un-synced edits are never overwritten
-      final pendingIds = state.where((h) => h.isPendingSync).map((h) => h.id).toSet();
+      final pendingIds = state
+          .where((h) => h.isPendingSync)
+          .map((h) => h.id)
+          .toSet();
       final merged = <HomeworkItem>[];
 
       for (final item in remote) {
@@ -125,7 +128,8 @@ class HomeworkNotifier extends StateNotifier<List<HomeworkItem>> {
     );
 
     // Local instant save
-    final updated = [...state, newItem]..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    final updated = [...state, newItem]
+      ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
     state = updated;
     await HiveBoxes.saveHomeworkItem(newItem);
 
@@ -151,10 +155,7 @@ class HomeworkNotifier extends StateNotifier<List<HomeworkItem>> {
   /// Update time spent counter
   Future<void> updateTimeSpent(HomeworkItem item, int additionalSeconds) async {
     final total = item.timeSpentSeconds + additionalSeconds;
-    final updated = item.copyWith(
-      timeSpentSeconds: total,
-      isPendingSync: true,
-    );
+    final updated = item.copyWith(timeSpentSeconds: total, isPendingSync: true);
 
     state = state.map((h) => h.id == item.id ? updated : h).toList();
     await HiveBoxes.saveHomeworkItem(updated);
@@ -191,7 +192,7 @@ class HomeworkNotifier extends StateNotifier<List<HomeworkItem>> {
 
 final homeworkListProvider =
     StateNotifierProvider<HomeworkNotifier, List<HomeworkItem>>((ref) {
-  final api = ref.watch(apiClientProvider);
-  final queue = ref.read(syncQueueProvider);
-  return HomeworkNotifier(api, queue);
-});
+      final api = ref.watch(apiClientProvider);
+      final queue = ref.read(syncQueueProvider);
+      return HomeworkNotifier(api, queue);
+    });

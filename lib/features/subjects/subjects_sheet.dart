@@ -11,7 +11,11 @@ import '../schedule/widgets/lesson_slot_card.dart';
 class SubjectsSheet extends ConsumerWidget {
   const SubjectsSheet({super.key});
 
-  void _showAddSubjectDialog(BuildContext context, WidgetRef ref, [SubjectModel? existing]) {
+  void _showAddSubjectDialog(
+    BuildContext context,
+    WidgetRef ref, [
+    SubjectModel? existing,
+  ]) {
     final loc = AppLocalizations.of(context);
     final nameCtrl = TextEditingController(text: existing?.name ?? '');
     final shortCtrl = TextEditingController(text: existing?.shortName ?? '');
@@ -19,9 +23,18 @@ class SubjectsSheet extends ConsumerWidget {
     String selectedColor = existing?.colorHex ?? '#6366F1';
 
     final colors = [
-      '#6366F1', '#EC4899', '#8B5CF6', '#3B82F6',
-      '#10B981', '#F59E0B', '#EF4444', '#14B8A6',
-      '#F97316', '#64748B', '#84CC16', '#06B6D4',
+      '#6366F1',
+      '#EC4899',
+      '#8B5CF6',
+      '#3B82F6',
+      '#10B981',
+      '#F59E0B',
+      '#EF4444',
+      '#14B8A6',
+      '#F97316',
+      '#64748B',
+      '#84CC16',
+      '#06B6D4',
     ];
 
     showDialog(
@@ -31,10 +44,17 @@ class SubjectsSheet extends ConsumerWidget {
           builder: (ctx, setState) {
             return AlertDialog(
               backgroundColor: const Color(0xFF1E293B),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               title: Text(
-                existing == null ? loc.translate('add_subject') : loc.translate('edit'),
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                existing == null
+                    ? loc.translate('add_subject')
+                    : loc.translate('edit'),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               content: SingleChildScrollView(
                 child: Column(
@@ -83,7 +103,9 @@ class SubjectsSheet extends ConsumerWidget {
                               color: parseHexColor(c),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: isPicked ? Colors.white : Colors.transparent,
+                                color: isPicked
+                                    ? Colors.white
+                                    : Colors.transparent,
                                 width: 2.5,
                               ),
                             ),
@@ -108,29 +130,42 @@ class SubjectsSheet extends ConsumerWidget {
                         : (name.length > 4 ? name.substring(0, 4) : name);
 
                     if (existing == null) {
-                      ref.read(subjectsProvider.notifier).addSubject(
+                      ref
+                          .read(subjectsProvider.notifier)
+                          .addSubject(
                             SubjectModel(
                               id: const Uuid().v4(),
                               name: name,
                               shortName: shortName,
                               colorHex: selectedColor,
-                              defaultCabinet: cabCtrl.text.trim().isNotEmpty ? cabCtrl.text.trim() : null,
+                              defaultCabinet: cabCtrl.text.trim().isNotEmpty
+                                  ? cabCtrl.text.trim()
+                                  : null,
                             ),
                           );
                     } else {
-                      ref.read(subjectsProvider.notifier).updateSubject(
+                      ref
+                          .read(subjectsProvider.notifier)
+                          .updateSubject(
                             existing.copyWith(
                               name: name,
                               shortName: shortName,
                               colorHex: selectedColor,
-                              defaultCabinet: cabCtrl.text.trim().isNotEmpty ? cabCtrl.text.trim() : null,
+                              defaultCabinet: cabCtrl.text.trim().isNotEmpty
+                                  ? cabCtrl.text.trim()
+                                  : null,
                             ),
                           );
                     }
                     Navigator.of(ctx).pop();
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: LiquidTheme.accent),
-                  child: Text(loc.translate('save'), style: const TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: LiquidTheme.accent,
+                  ),
+                  child: Text(
+                    loc.translate('save'),
+                    style: const TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             );
@@ -161,7 +196,9 @@ class SubjectsSheet extends ConsumerWidget {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0x4094A3B8) : const Color(0x4064748B),
+                color: isDark
+                    ? const Color(0x4094A3B8)
+                    : const Color(0x4064748B),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -181,7 +218,11 @@ class SubjectsSheet extends ConsumerWidget {
               ),
               IconButton(
                 onPressed: () => _showAddSubjectDialog(context, ref),
-                icon: const Icon(Icons.add_circle_outline_rounded, color: LiquidTheme.accentLight, size: 28),
+                icon: const Icon(
+                  Icons.add_circle_outline_rounded,
+                  color: LiquidTheme.accentLight,
+                  size: 28,
+                ),
               ),
             ],
           ),
@@ -200,9 +241,14 @@ class SubjectsSheet extends ConsumerWidget {
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0x1F334155) : const Color(0x22CBD5E1),
+                    color: isDark
+                        ? const Color(0x1F334155)
+                        : const Color(0x22CBD5E1),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Row(
@@ -210,7 +256,10 @@ class SubjectsSheet extends ConsumerWidget {
                       Container(
                         width: 14,
                         height: 14,
-                        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -229,7 +278,9 @@ class SubjectsSheet extends ConsumerWidget {
                                 '${loc.translate('cab')} ${s.defaultCabinet}',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: isDark ? LiquidTheme.darkTextMuted : LiquidTheme.lightTextMuted,
+                                  color: isDark
+                                      ? LiquidTheme.darkTextMuted
+                                      : LiquidTheme.lightTextMuted,
                                 ),
                               ),
                           ],
@@ -241,7 +292,9 @@ class SubjectsSheet extends ConsumerWidget {
                         color: Colors.white70,
                       ),
                       IconButton(
-                        onPressed: () => ref.read(subjectsProvider.notifier).deleteSubject(s.id),
+                        onPressed: () => ref
+                            .read(subjectsProvider.notifier)
+                            .deleteSubject(s.id),
                         icon: const Icon(Icons.delete_outline, size: 18),
                         color: LiquidTheme.danger,
                       ),
