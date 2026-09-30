@@ -1,5 +1,15 @@
 # Updates Log
 
+## [1.0.6] - 2026-09-30
+### Added & Documented
+- **Solo Session-Consistent Architecture Framework**:
+  - Generated frozen core specification (`tech.md` v1.0.5) defining immutable stack choices, Hive box schemas, remote REST API contracts, shared Liquid Glass widget primitives, and testing doctrine.
+  - Implemented session execution guide (`WORKFLOW.md`) establishing vertical slice task list (Tasks 0 through 8), acceptance criteria, per-slice test definitions, and strict `CONTRACT GAP` escalation process.
+  - Updated repository agent instructions (`AGENTS.md`) to autoload `tech.md` and `WORKFLOW.md` into agent sessions, enforcing frozen contract adherence and zero invented contracts across independent memory-less AI sessions.
+- **Verification**:
+  - Clean static analysis with `flutter analyze` (0 issues).
+  - All unit, widget, and integration tests passed (10/10).
+
 ## [1.0.5] - 2026-09-29
 ### Added & Optimized
 - **LiquidGlass Rendering & Shader Pipeline Optimizations**:
